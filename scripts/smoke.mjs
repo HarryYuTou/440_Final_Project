@@ -80,6 +80,8 @@ try {
     "/beans/example-bean", "/drinks/example-drink", "/recommendations", "/login", "/signup",
     "/account", "/saved", "/upgrade", "/checkout/result?paid=true&session_id=pretend",
   ];
+  // Map and detail pages read the catalog per request; while it is unavailable they say so (HTTP 200).
+  const catalogPages = new Set(pages.filter((path) => /^\/(explore|beans|drinks)(\/|$)/.test(path)));
   for (const path of pages) {
     const response = await request(path);
     assert.equal(response.status, 200, path);
@@ -87,6 +89,10 @@ try {
     assert.ok(html.includes("Coffee Atlas"), `Shared application shell missing at ${path}`);
     assert.ok(!html.includes("NEXT_HTTP_ERROR_FALLBACK;500"), `Server rendering error at ${path}`);
     if (path.startsWith("/checkout/result")) assert.ok(html.includes("No payment has been confirmed."));
+    if (catalogPages.has(path)) {
+      assert.ok(html.includes("The coffee catalog isn’t connected yet."), `Unavailable catalog notice missing at ${path}`);
+      assert.ok(!html.includes("Development preview data"), `Map preview data leaked into production at ${path}`);
+    }
   }
   assert.equal((await request("/this-route-does-not-exist")).status, 404);
 

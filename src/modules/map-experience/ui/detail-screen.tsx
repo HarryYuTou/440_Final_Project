@@ -1,20 +1,22 @@
-import { Breadcrumbs } from "@/components/breadcrumbs";
-import { FeaturePlaceholder } from "@/components/feature-placeholder";
-import { BeanIcon, CupIcon } from "@/components/icons";
+import { notFound } from "next/navigation";
+import type { Bean, Drink } from "@/contracts";
+import type { ItemLoad } from "@/modules/map-experience/server/catalog-loader";
+import { BeanDetail } from "./bean-detail";
+import { DetailProblem } from "./detail-parts";
+import { DrinkDetail } from "./drink-detail";
 
-export function DetailScreen({ kind }: { kind: "bean" | "drink" }) {
-  const isBean = kind === "bean";
-  return (
-    <div className="content-width interior-page">
-      <Breadcrumbs items={[{ label: "Explore", href: "/explore" }, { label: isBean ? "Coffee bean" : "Regional drink" }]} />
-      <FeaturePlaceholder
-        label={isBean ? "Coffee origins" : "Coffee culture"}
-        title={isBean ? "This bean’s story is still to come." : "This cup’s story is still to come."}
-        description={isBean ? "Bean profiles will bring together origin, growing conditions, processing, and flavor. This profile is not available yet." : "Drink guides will explore ingredients, preparation, and regional traditions. This guide is not available yet."}
-        icon={isBean ? <BeanIcon width={38} height={38} /> : <CupIcon width={38} height={38} />}
-        primaryAction={{ href: "/explore", label: "Back to exploring" }}
-        secondaryAction={{ href: "/recommendations", label: "Explore by taste" }}
-      />
-    </div>
-  );
+/**
+ * Bean and drink detail screens for every catalog state. Pages call
+ * notFound() for unknown IDs first; this is a safety net for the same case.
+ */
+export function BeanDetailScreen({ load }: { load: ItemLoad<Bean> }) {
+  if (load.status === "not-found") notFound();
+  if (load.status !== "ready") return <DetailProblem kind="bean" status={load.status} />;
+  return <BeanDetail bean={load.item} index={load.index} preview={load.preview} />;
+}
+
+export function DrinkDetailScreen({ load }: { load: ItemLoad<Drink> }) {
+  if (load.status === "not-found") notFound();
+  if (load.status !== "ready") return <DetailProblem kind="drink" status={load.status} />;
+  return <DrinkDetail drink={load.item} index={load.index} preview={load.preview} />;
 }
