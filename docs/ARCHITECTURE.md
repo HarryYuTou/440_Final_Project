@@ -14,10 +14,13 @@ flowchart TD
     Validation --> Accounts[Account, preference, save and access boundary]
     Validation --> AI[Recommendation server boundary]
     Catalog -. Later: Member 3 .-> Storage[Catalog storage and sourced content]
-    Accounts -. Later: Member 4 .-> Identity[Authentication and user storage]
-    Accounts -. Later: Member 4 .-> Stripe[Stripe test checkout and webhooks]
+    Accounts -. Later: Member 3 .-> Identity[Authentication and user storage]
+    Accounts -. Later: Member 3 .-> Stripe[Stripe test checkout and webhooks]
     AI -. Later: Member 5 .-> Model[Model provider and grounded recommendation flow]
     AI -. Later catalog access .-> Catalog
+    Trip[Trip map server route, later: Member 4] -. Shared AI client .-> Model
+    Trip -. Validates stops against .-> Catalog
+    Trip -. Reads preferences and saves .-> Accounts
     API --> Fixtures[Development fixture gate]
     Fixtures --> Examples[Explicitly labeled contract examples]
 ```

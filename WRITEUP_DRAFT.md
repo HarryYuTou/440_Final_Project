@@ -1,7 +1,7 @@
 # Personalized Coffee Discovery Through a World Map
 
 **Capstone write-up — pre-implementation draft**  
-**Date:** October 16, 2026
+**Date:** October 16, 2026 (updated October 19, 2026)
 
 This draft contains the business question, problem definition, and a concise Product Requirements Document (PRD) describing the proposed solution. Features are described as planned. The final report will include the actual architecture, implementation, deployment, lessons learned, and next steps.
 
@@ -23,13 +23,13 @@ For example, a user might say, “I usually drink milk coffee, prefer something 
 
 Users may describe their preferences in everyday language rather than technical coffee terminology. AI can help interpret those descriptions, connect them to relevant characteristics, and explain recommendations in accessible terms. It can also consider a combination of preferences and drinking habits when suggesting beans, regional drinks, or suitable pairings.
 
-The proposed AI backend will therefore support the product's core value: helping users decide what to try and understand why it may suit them. Geographic browsing and curated information will provide the context for these recommendations.
+The proposed AI backend will therefore support the product's core value: helping users decide what to try and understand why it may suit them. Geographic browsing and curated information will provide the context for these recommendations. AI will also turn a user's preferences and saved items into a suggested future coffee trip: an ordered set of destinations chosen only from the curated catalog, each with a reason it fits the user.
 
 ## 2. Product Requirements Document (PRD)
 
 ### 2.1 Product Objective
 
-The product will help users choose a bean profile or regional drink, understand its suitability, and explore its background. Recommendations will reflect taste preferences and drinking habits. The map will support discovery, while AI will connect preferences to choices grounded in curated information.
+The product will help users choose a bean profile or regional drink, understand its suitability, and explore its background. Recommendations will reflect taste preferences and drinking habits. The map will support discovery, while AI will connect preferences to choices grounded in curated information. AI recommendations answer what to drink; the AI trip map answers where to go to drink it.
 
 ### 2.2 Product Scope: Coffee Beans, Regional Drinks, and Geography
 
@@ -48,7 +48,8 @@ Users will navigate from the world map to supported countries and curated region
 3. Register or sign in to save preferences and selections.
 4. Describe preferences through accessible choices and optional natural-language input.
 5. Review recommendations and explanations, following links between beans, drinks, and places.
-6. Save selections to the account and access the Stripe test payment flow.
+6. Generate an AI trip map of future coffee destinations, shown as a route on the world map with a stop-by-stop list.
+7. Save selections to the account and access the Stripe test payment flow.
 
 ### 2.4 Core Functional Requirements
 
@@ -58,14 +59,15 @@ Users will navigate from the world map to supported countries and curated region
 | Interactive world map | Navigation from the world view to supported countries and regions. |
 | Coffee and drink information | Descriptions of beans, growing environments, flavors, regional preparations, and cultural background, with relevant sources. |
 | AI-powered recommendations | Suggestions for beans and drinks based on personal preferences, with explanations of suitability and relevant pairings. |
+| AI trip map | A server-generated itinerary of future coffee destinations based on saved preferences and selections. Stops are limited to supported catalog countries and regions, validated on the server, drawn as a route on the world map, and listed with a recommendation and reason for each stop. |
 | Payment integration | A working Stripe checkout flow in sandbox/test mode. |
 
 ### 2.5 AI and Error-Handling Requirements
 
-The AI backend will use user preferences, the selected geographic context, and curated coffee information to produce recommendations. Factual descriptions will be grounded in the available sources, and suggested pairings will be distinguished from documented traditions.
+The AI backend will use user preferences, the selected geographic context, and curated coffee information to produce recommendations. The trip map uses the same server-side AI service to select and order destinations from the catalog's supported countries and regions; any destination that is not in the catalog is rejected. The AI key stays on the server. Factual descriptions will be grounded in the available sources, and suggested pairings will be distinguished from documented traditions.
 
-The product will account for unclear preferences, missing information, and unavailable AI responses. It will request clarification or explain limitations when appropriate and provide understandable error messages for account and payment problems.
+The product will account for unclear preferences, missing information, invalid AI output, and unavailable AI responses. It will request clarification or explain limitations when appropriate and provide understandable error messages for account and payment problems.
 
 ### 2.6 Deployment and Delivery Requirements
 
-The planned product will be deployed at a public URL and support an end-to-end user experience, including registration, AI recommendations, and Stripe test payments. The implementation will be maintained in a structured GitHub repository with a README, an architecture diagram, and explanations of key design decisions. The deployed product will support the team's live demonstration.
+The planned product will be deployed at a public URL and support an end-to-end user experience, including registration, AI recommendations, the AI trip map, and Stripe test payments. The implementation will be maintained in a structured GitHub repository with a README, an architecture diagram, and explanations of key design decisions. The deployed product will support the team's live demonstration.

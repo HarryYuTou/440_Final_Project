@@ -23,7 +23,7 @@ async function readEnvelope(response: Response): Promise<ApiResult<unknown> | nu
 }
 
 /**
- * Stand-in save action until Member 4's shared save action lands. When it
+ * Stand-in save action until Member 3's shared save action lands. When it
  * does, swap the two usages (bean-detail.tsx, drink-detail.tsx) and delete
  * this file and save-button.module.css.
  *

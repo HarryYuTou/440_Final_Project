@@ -1,7 +1,7 @@
 import "server-only";
 import { PAID_CAPABILITY, unavailable, type AccountsService } from "@/contracts";
 
-/** Member 4 replaces this adapter. Never infer identity or payment from browser input. */
+/** Member 3 replaces this adapter. Never infer identity or payment from browser input. */
 export const accountsService: AccountsService = {
   async getSession() { return { status: "unavailable", user: null }; },
   async getPreferences() { return unavailable("Preferences"); },

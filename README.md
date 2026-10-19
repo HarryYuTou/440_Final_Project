@@ -2,7 +2,14 @@
 
 A five-person capstone project for discovering coffee beans and regional drinks through geography and personal preferences.
 
-This repository currently provides the **independently runnable main foundation**. It includes application pages, shared contracts, server entry points, and explicit unavailable states. Interactive maps, researched catalog content, real authentication, AI recommendations, Stripe test checkout, and hosting belong to the four feature branches. They are not required to run this foundation.
+This repository currently provides the **independently runnable main foundation**. It includes application pages, shared contracts, server entry points, and explicit unavailable states. Researched catalog content, real authentication, AI recommendations, the AI trip map, Stripe test checkout, and hosting belong to the feature branches. They are not required to run this foundation. The interactive map is already merged (see below).
+
+## Current status (October 19, 2026)
+
+- The team split is final: Member 2 map, Member 3 catalog/data + accounts, saved items and Stripe payments + integration, Member 4 AI trip map (`codex/ai-trip-map`), Member 5 AI recommendations. [TEAM_BRANCH_PLAN.md](TEAM_BRANCH_PLAN.md) is the source of truth.
+- Member 2's map (`codex/map-experience`) is already merged into `main`. Its country/region preview data is development-only (behind `ENABLE_DEV_FIXTURES`); the real catalog is still Member 3's.
+- Members 3, 4 and 5 start their branches from the **latest** `main`, not from the original foundation commit.
+- Catalog, accounts, payments, AI recommendations and the AI trip map are not implemented yet; their routes return explicit unavailable states.
 
 ## Run locally
 
@@ -51,4 +58,4 @@ The endpoint returns 404 unless both development mode and the opt-in flag are ac
 - [File and route ownership](docs/OWNERSHIP.md)
 - [Main handoff and feature extension guide](docs/HANDOFF.md)
 
-Member 1 completes the local baseline first. The other four members create their branches from that baseline after it is committed and pushed. Member 3 coordinates subsequent integration, deployment, and final documentation.
+Member 1 completes the local baseline first. The other four members create their branches from that baseline after it is committed and pushed. Member 2 builds the map, Member 3 owns the catalog, accounts and Stripe payments and coordinates integration, deployment, and final documentation, Member 4 builds the AI trip map, and Member 5 builds the AI recommendations.

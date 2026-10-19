@@ -8,9 +8,11 @@ This guide applies **after the main foundation is handed off**. Member 1 creates
 |---|---|---|
 | Member 1 — `main` | Initial shared scaffold, contracts, placeholder modules, example data, and documentation | Deliver the independently runnable foundation |
 | Member 2 — `codex/map-experience` | `src/modules/map-experience/ui/` and assigned exploration/detail page entry points | Map, location browsing, bean/drink details, and recommendation links |
-| Member 3 — `codex/catalog-data` | `src/modules/catalog/server/`, catalog route handlers, real content/imports, catalog storage | Sourced records and reads; later integration, hosting, and final documentation |
-| Member 4 — `codex/accounts-payments` | `src/modules/accounts/`, account/payment page entry points, account/payment route handlers | Authentication, preferences and saves persistence, Stripe test flow, and server access decisions |
+| Member 3 — `codex/catalog-data` | `src/modules/catalog/server/`, catalog route handlers, real content/imports, catalog storage; `src/modules/accounts/`, account/payment page entry points, account/payment route handlers | Sourced records and reads; authentication, preferences and saves persistence, Stripe test flow, and server access decisions; later integration, hosting, and final documentation |
+| Member 4 — `codex/ai-trip-map` | `src/modules/trip-map/` (new), the trip page and trip-planning route handler, and the route layer drawn on the existing globe | AI-generated future coffee destination trip: server-side model call, stop validation against catalog country/region IDs, itinerary and stop-by-stop list |
 | Member 5 — `codex/ai-recommendations` | `src/modules/recommendations/`, recommendation page and route handler | Preference questionnaire, model integration, recommendations, explanations, and feature-side access enforcement |
+
+Member 4 and Member 5 share one server-side AI client and key handling. Member 5 recommends what coffee to drink; Member 4 plans where to go to drink it.
 
 ## Page routes
 
@@ -23,8 +25,9 @@ This guide applies **after the main foundation is handed off**. Member 1 creates
 | `/beans/[id]` | Member 2 |
 | `/drinks/[id]` | Member 2 |
 | `/recommendations` | Member 5 |
-| `/login`, `/signup`, `/account`, `/saved` | Member 4 |
-| `/upgrade`, `/checkout/result` | Member 4 |
+| `/login`, `/signup`, `/account`, `/saved` | Member 3 |
+| `/upgrade`, `/checkout/result` | Member 3 |
+| Trip map page (new, for example `/trip`) | Member 4 |
 
 ## API routes
 
@@ -32,8 +35,9 @@ This guide applies **after the main foundation is handed off**. Member 1 creates
 |---|---|
 | `/api/health`, `/api/dev/fixtures` | Member 3 coordinates shared maintenance |
 | `/api/catalog`, `/api/catalog/beans/[id]`, `/api/catalog/drinks/[id]` | Member 3 |
-| `/api/session`, `/api/preferences`, `/api/saved`, `/api/access` | Member 4 |
-| `/api/checkout`, `/api/webhooks/stripe` | Member 4 |
+| `/api/session`, `/api/preferences`, `/api/saved`, `/api/access` | Member 3 |
+| `/api/checkout`, `/api/webhooks/stripe` | Member 3 |
+| Trip-planning route (new, for example `/api/trip`) | Member 4 |
 | `/api/recommendations` | Member 5 |
 
 ## Shared files and integration rules
@@ -43,9 +47,10 @@ After handoff, Member 3 coordinates changes to `src/contracts/`, `src/components
 - Keep feature-specific UI and service code inside the assigned module.
 - Agree on contract changes with all consumers before making them. Update schemas, affected callers, examples, and tests together.
 - Add dependencies with npm and include the corresponding lockfile change. Coordinate concurrent dependency edits.
-- Member 4 owns preference storage; Member 5 owns the questionnaire. Do not create duplicate preference formats or saved-item stores.
-- Member 3 and Member 4 coordinate database schema and migration changes before merging.
-- Map and AI consume the catalog contract rather than maintaining independent production copies of coffee data.
-- The paid feature owner enforces the server access decision supplied by Member 4. The coordinator and relevant owners agree on the real paid benefit first.
+- Member 3 owns preference storage; Member 5 owns the questionnaire. Do not create duplicate preference formats or saved-item stores. The trip map reads preferences and saved items through Member 3's account interfaces.
+- Map, AI recommendations, and the trip map consume the catalog contract rather than maintaining independent production copies of coffee data. Trip stops are limited to existing catalog country/region IDs and are validated on the server.
+- Member 4 and Member 5 share one server-side AI client and key handling. The model key stays in a server environment variable.
+- Member 4 draws the trip route on Member 2's existing globe; coordinate map-layer changes with Member 2 instead of adding a second map.
+- The paid feature owner enforces the server access decision supplied by Member 3. The coordinator and relevant owners agree on the real paid benefit first.
 
 The complete task descriptions and final submission responsibilities remain in [TEAM_BRANCH_PLAN.md](../TEAM_BRANCH_PLAN.md).

@@ -96,6 +96,17 @@ A successful domain response has `status: "matches"` with one or more matches, o
 
 The AI implementation must validate both the response shape and its references against the real catalog. A syntactically valid ID is not proof that an item or supporting source exists. Provider failures remain errors; they must not become fabricated results or misleading no-match outcomes. If recommendations implement the agreed paid benefit, check `AccountsService.getAccess` on the server before executing it.
 
+## Trip itinerary (planned, Member 4)
+
+The AI trip map is added after handoff; its schema is not in `src/contracts/` yet. Member 4 adds it there with Member 3 and keeps it consistent with this description:
+
+- Input comes from the signed-in user's stored preferences and saved item references, read on the server through `AccountsService`. The browser does not supply a user ID.
+- The server calls the model with the shared server-side AI client used by recommendations. The model key stays in a server environment variable and is never sent to the client.
+- The model may choose stops only from existing catalog country IDs and region IDs. The server validates every stop against the real catalog (the ID exists, and a region belongs to its country) before responding; invalid output is rejected, not shown.
+- A successful itinerary contains ordered `stops`. Each stop has a location reference (`countryId`, nullable `regionId`), a recommended catalog item reference, and a nonempty reason tied to the user's preferences.
+- The response uses `ApiResult` like other services. Provider failures and invalid model output are errors, not fabricated itineraries.
+- The map draws the route between stop `center` values on the existing globe; stops whose `center` is `null` stay in the list without a map point.
+
 ## API entry points
 
 These routes are intentionally available before providers are connected. The normal catalog, persistence, recommendation, and checkout endpoints return unavailable errors until their owner replaces the corresponding server implementation. Session and access communicate their explicit unavailable states.
@@ -118,7 +129,7 @@ These routes are intentionally available before providers are connected. The nor
 | `POST /api/webhooks/stripe` | Future server webhook entry; never accepts events as successful in the foundation |
 | `GET /api/dev/fixtures` | Labeled examples only when development mode and the explicit flag are active |
 
-Provider routes should retain their method, request shape, response envelope, and error semantics as their implementations are connected. Authentication-provider-specific routes can be added by Member 4 as needed; the foundation's login/signup pages are not themselves an authentication implementation.
+Provider routes should retain their method, request shape, response envelope, and error semantics as their implementations are connected. Authentication-provider-specific routes can be added by Member 3 as needed; the foundation's login/signup pages are not themselves an authentication implementation.
 
 ## Development fixture package
 
@@ -134,4 +145,4 @@ The catalog uses `example-country`, `example-region`, `example-bean`, `example-d
 | `src/modules/accounts/server/service.ts` | `accountsService` | `AccountsService` |
 | `src/modules/recommendations/server/service.ts` | `recommendationService` | `RecommendationService` |
 
-`src/lib/server/services.ts` combines these as `services.catalog`, `services.accounts`, and `services.recommendations`. Route handlers use that server-only binding. Keep the exported interface stable so feature implementations can replace unavailable adapters without rewriting their consumers. Member 4 separately replaces `src/app/api/webhooks/stripe/route.ts` with raw-body signature verification and idempotent event processing.
+`src/lib/server/services.ts` combines these as `services.catalog`, `services.accounts`, and `services.recommendations`. Route handlers use that server-only binding. Keep the exported interface stable so feature implementations can replace unavailable adapters without rewriting their consumers. Member 3 separately replaces `src/app/api/webhooks/stripe/route.ts` with raw-body signature verification and idempotent event processing.
