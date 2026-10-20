@@ -12,6 +12,7 @@ export function SiteHeader() {
         <nav className="primary-nav" aria-label="Main navigation">
           <Link href="/explore">Explore</Link>
           <Link href="/recommendations">Find your coffee</Link>
+          <Link href="/trip">Plan a trip</Link>
           <Link href="/saved">Saved</Link>
         </nav>
         <Link className="sign-in-link" href="/login">Sign in <span aria-hidden="true">↗</span></Link>

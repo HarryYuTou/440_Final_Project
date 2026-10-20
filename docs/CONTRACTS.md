@@ -96,16 +96,24 @@ A successful domain response has `status: "matches"` with one or more matches, o
 
 The AI implementation must validate both the response shape and its references against the real catalog. A syntactically valid ID is not proof that an item or supporting source exists. Provider failures remain errors; they must not become fabricated results or misleading no-match outcomes. If recommendations implement the agreed paid benefit, check `AccountsService.getAccess` on the server before executing it.
 
-## Trip itinerary (planned, Member 4)
+## Trip itinerary (Member 4)
 
-The AI trip map is added after handoff; its schema is not in `src/contracts/` yet. Member 4 adds it there with Member 3 and keeps it consistent with this description:
+Source of truth: `src/contracts/trips.ts`; service interface `TripService.plan(request, input)` in `src/contracts/services.ts`; implementation and design notes in `src/modules/trip-map/`.
 
-- Input comes from the signed-in user's stored preferences and saved item references, read on the server through `AccountsService`. The browser does not supply a user ID.
-- The server calls the model with the shared server-side AI client used by recommendations. The model key stays in a server environment variable and is never sent to the client.
-- The model may choose stops only from existing catalog country IDs and region IDs. The server validates every stop against the real catalog (the ID exists, and a region belongs to its country) before responding; invalid output is rejected, not shown.
-- A successful itinerary contains ordered `stops`. Each stop has a location reference (`countryId`, nullable `regionId`), a recommended catalog item reference, and a nonempty reason tied to the user's preferences.
-- The response uses `ApiResult` like other services. Provider failures and invalid model output are errors, not fabricated itineraries.
-- The map draws the route between stop `center` values on the existing globe; stops whose `center` is `null` stay in the list without a map point.
+Request (`tripRequestSchema`, strict):
+
+- `preferences` (optional): the full preference object. When omitted, the server reads the signed-in user's stored preferences through `AccountsService`.
+- `stopCount`: integer 2–6, default 4. The plan may have fewer stops when coverage is thin.
+- `useSavedItems`: boolean, default `true`. Saved item references are read on the server for a verified session; the browser never supplies them (or a user ID), and the schema rejects a `savedItems` field.
+
+Response (`tripResponseSchema`, wrapped in `ApiResult`):
+
+- `status: "itinerary"` with `itinerary: { title, summary, stops, basis }`. Each stop has `order` (1-based), `countryId`, nullable `regionId`, `recommendation` (an item reference to a bean grown there or a drink associated there), 1–3 `reasons`, `fromSaved`, and nonempty `sourceIds` (the recommended item's own sources). `basis` says whether preferences came from the request, the account, or neither, and how many saved items were used.
+- `status: "no-trip"` with `reason` and `suggestions`, for nothing to plan from or too little catalog coverage. Provider failures and invalid model output are errors, never a `no-trip` or a fabricated itinerary.
+
+The model chooses stops only from catalog countries and regions that have content. The server rejects unknown places, regions outside their country, items not available at a stop, repeated places or items, a country together with one of its own regions, and stops without reasons; it retries once, then returns `INTERNAL_ERROR`. The page draws the route between stop `center` values (a region without one uses its country's); a stop with no coordinates stays in the list without a map point.
+
+Paid access: off by default. With `TRIP_REQUIRES_ACCESS=true` the service checks `AccountsService.getAccess` first (`denied` → `FORBIDDEN`, `unavailable` → `SERVICE_UNAVAILABLE`).
 
 ## API entry points
 
@@ -124,6 +132,7 @@ These routes are intentionally available before providers are connected. The nor
 | `POST /api/saved` | Item-reference JSON object |
 | `DELETE /api/saved` | Item-reference JSON object |
 | `POST /api/recommendations` | Recommendation request JSON object |
+| `POST /api/trip` | Trip request JSON object (AI trip map) |
 | `GET /api/access` | Current server-side paid-access decision |
 | `POST /api/checkout` | Checkout input JSON object |
 | `POST /api/webhooks/stripe` | Future server webhook entry; never accepts events as successful in the foundation |

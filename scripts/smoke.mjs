@@ -77,7 +77,7 @@ try {
 
   const pages = [
     "/", "/explore", "/explore/example-country", "/explore/example-country/example-region",
-    "/beans/example-bean", "/drinks/example-drink", "/recommendations", "/login", "/signup",
+    "/beans/example-bean", "/drinks/example-drink", "/recommendations", "/trip", "/login", "/signup",
     "/account", "/saved", "/upgrade", "/checkout/result?paid=true&session_id=pretend",
   ];
   // Map and detail pages read the catalog per request; while it is unavailable they say so (HTTP 200).
@@ -89,6 +89,7 @@ try {
     assert.ok(html.includes("Coffee Atlas"), `Shared application shell missing at ${path}`);
     assert.ok(!html.includes("NEXT_HTTP_ERROR_FALLBACK;500"), `Server rendering error at ${path}`);
     if (path.startsWith("/checkout/result")) assert.ok(html.includes("No payment has been confirmed."));
+    if (path === "/trip") assert.ok(html.includes("The coffee catalog isn’t connected yet."), "Trip page should report the unconnected catalog");
     if (catalogPages.has(path)) {
       assert.ok(html.includes("The coffee catalog isn’t connected yet."), `Unavailable catalog notice missing at ${path}`);
       assert.ok(!html.includes("Development preview data"), `Map preview data leaked into production at ${path}`);
@@ -118,6 +119,7 @@ try {
     ["/api/saved", mutation("POST", { itemType: "bean", itemId: "example-bean" })],
     ["/api/saved", mutation("DELETE", { itemType: "drink", itemId: "example-drink" })],
     ["/api/recommendations", mutation("POST", { preferences, itemType: "both", geography: { scope: "global" } })],
+    ["/api/trip", mutation("POST", { preferences, stopCount: 3 })],
     ["/api/checkout", mutation("POST", { capability: "personalized-discovery" })],
     ["/api/webhooks/stripe", mutation("POST", { type: "checkout.session.completed" })],
   ];
@@ -130,6 +132,8 @@ try {
     ["/api/saved", mutation("POST", { itemType: "bean", itemId: "example-bean", userId: "admin" })],
     ["/api/checkout", mutation("POST", { capability: "personalized-discovery", paid: true })],
     ["/api/recommendations", mutation("POST", {})],
+    ["/api/trip", mutation("POST", { stopCount: 9 })],
+    ["/api/trip", mutation("POST", { savedItems: [{ itemType: "bean", itemId: "example-bean" }] })],
   ]) {
     assert.equal((await json(path, 400, init)).error.code, "INVALID_INPUT", path);
   }

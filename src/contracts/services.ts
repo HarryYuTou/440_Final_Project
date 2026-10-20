@@ -2,6 +2,7 @@ import type { ApiResult, ItemReference } from "./common";
 import type { Bean, CatalogFilter, CatalogSnapshot, Drink } from "./catalog";
 import type { CheckoutInput, CheckoutSession, PaidAccess, Preferences, SavedItem, SessionState } from "./accounts";
 import type { RecommendationRequest, RecommendationResponse } from "./recommendations";
+import type { TripRequest, TripResponse } from "./trips";
 
 export interface CatalogService {
   list(filter: CatalogFilter): Promise<ApiResult<CatalogSnapshot>>;
@@ -24,4 +25,14 @@ export interface AccountsService {
 export interface RecommendationService {
   /** If this feature becomes paid, enforce AccountsService.getAccess on the server here. */
   recommend(request: Request, input: RecommendationRequest): Promise<ApiResult<RecommendationResponse>>;
+}
+
+export interface TripService {
+  /**
+   * Plans a catalog-grounded coffee trip. Preferences and saved items are read
+   * from the verified session when available; every stop is validated on the
+   * server. If the trip map becomes the paid benefit, enforce
+   * AccountsService.getAccess here (see TRIP_REQUIRES_ACCESS).
+   */
+  plan(request: Request, input: TripRequest): Promise<ApiResult<TripResponse>>;
 }
