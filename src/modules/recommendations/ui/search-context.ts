@@ -1,10 +1,40 @@
-import { stableIdSchema } from "@/contracts";
+import { type ItemReference, stableIdSchema } from "@/contracts";
 
 export type RecommendationSearchParams = Record<string, string | string[] | undefined>;
 
 function safeId(value: string | string[] | undefined): string | undefined {
   const parsed = stableIdSchema.safeParse(value);
   return parsed.success ? parsed.data : undefined;
+}
+
+export interface InitialSearch {
+  itemType: "bean" | "drink" | "both" | null;
+  scope: "global" | "selected" | null;
+  countryId: string | null;
+  regionId: string | null;
+  startingItem: ItemReference | null;
+}
+
+/**
+ * The deep-link query as starting values for the form, with the same rules as
+ * getRecommendationContext: invalid or repeated values are dropped, a region
+ * needs its country, and two starting items cancel each other out. Missing
+ * values stay null so the form can ask instead of guessing.
+ */
+export function getInitialSearch(params: RecommendationSearchParams): InitialSearch {
+  const countryId = safeId(params.countryId) ?? null;
+  const regionId = countryId ? safeId(params.regionId) ?? null : null;
+  const ambiguous = params.beanId !== undefined && params.drinkId !== undefined;
+  const beanId = ambiguous ? undefined : safeId(params.beanId);
+  const drinkId = ambiguous ? undefined : safeId(params.drinkId);
+  const { type, scope } = params;
+  return {
+    itemType: type === "bean" || type === "drink" || type === "both" ? type : null,
+    scope: scope === "global" || (scope === "selected" && countryId) ? scope : null,
+    countryId,
+    regionId,
+    startingItem: beanId ? { itemType: "bean", itemId: beanId } : drinkId ? { itemType: "drink", itemId: drinkId } : null,
+  };
 }
 
 /** Display-only context. This neither loads catalog records nor requests recommendations. */
