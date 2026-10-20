@@ -21,7 +21,7 @@ Errors: no key → `SERVICE_UNAVAILABLE` (not retryable); rate limit / outage / 
 | Variable | Meaning |
 |---|---|
 | `MODEL_API_KEY` | Anthropic API key. Without it the page works but answers "AI recommendations aren’t configured". Never prefix with `NEXT_PUBLIC_`, never commit. |
-| `MODEL_NAME` | Optional. Defaults to `claude-opus-5-5`. |
+| `MODEL_NAME` | Optional. Defaults to `claude-sonnet-5-5` (lower cost, about 6 s per recommendation); `claude-opus-5-5` is slower and costs about twice as much. |
 
 Local try-out: put `ENABLE_DEV_FIXTURES=true` and `MODEL_API_KEY=...` in `.env.local`, run `npm run dev`, open `/explore`, pick a place or bean and use "Get recommendations like this".
 

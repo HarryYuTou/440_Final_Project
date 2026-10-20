@@ -10,7 +10,8 @@ import type { z } from "zod";
  * provider messages, keys and stack traces never leave this file.
  */
 
-export const DEFAULT_MODEL = "claude-opus-5-5";
+/** Sonnet keeps per-request cost low; set MODEL_NAME (e.g. claude-opus-5-5) to override. */
+export const DEFAULT_MODEL = "claude-sonnet-5-5";
 
 export type AiFailure =
   /** MODEL_API_KEY is not set on the server. */

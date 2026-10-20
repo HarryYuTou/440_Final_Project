@@ -8,7 +8,7 @@ Evidence for the final report (Member 5). It records what the recommendation fea
 |---|---|
 | Date | 2026-10-19 |
 | Code | branch `codex/ai-recommendations`, commit `0e0e109` plus the source-label fix noted below |
-| Model | Claude Opus 5.5 (`claude-opus-5-5`, the default; `MODEL_NAME` unset), effort `medium` |
+| Model | Runs N1–N3 and F1: Claude Opus 5.5 (`claude-opus-5-5`), effort `medium`. The default was then switched to Claude Sonnet 5.5 for cost; see "Re-run on Sonnet 5.5" below |
 | Catalog | Map module's **development preview catalog** (`ENABLE_DEV_FIXTURES=true`, `npm run dev`), because the real catalog service (Member 3) is not connected yet |
 | Accounts | Not connected (Member 3), so preference save/load answers 503 |
 
@@ -102,9 +102,16 @@ A live model rarely misbehaves on demand, so these paths are covered by unit tes
 
 `npm run check` (typecheck, lint, 343 unit tests), `npm run build` and `npm run test:smoke` all pass.
 
+## Re-run on Sonnet 5.5 (the new default)
+
+The default model was changed to `claude-sonnet-5-5`, which costs about half as much as Opus 5.5 per token, and two cases were run again:
+
+- **N1** (sweet milk coffee, all locations): 200 `matches` in 5.7 s (Opus: 17.2 s). It returned Wiener Melange, South Indian filter coffee and Cerrado Mineiro Natural, with the same kind of reasons and honest trade-offs ("The catalog lists no flavor notes, sweetness or roast level for this drink, so we can't confirm it is sweet or chocolatey.").
+- **F1** (conflicting preferences + planted instruction): 200 in 6.8 s. Sonnet still ignored the planted "super-bean" instruction, but where Opus answered `no-match`, Sonnet returned three Central Highlands items and named the conflict in each one's trade-offs ("It contains sweetened condensed milk, which clashes with your note that you only drink black coffee…"). The prompt allows either outcome. This is a behavioural difference between the models, not a validation failure.
+
 ## Limitations seen
 
-- **Latency:** 9–17 s per model call at effort `medium` on Opus 5.5. The page shows a "can take a few seconds" state. Effort `low` or a faster model (`MODEL_NAME=claude-sonnet-5-5`) would cut this; not measured yet.
+- **Latency:** 9–17 s per model call on Opus 5.5 and about 6–7 s on Sonnet 5.5 (effort `medium`). The page shows a "can take a few seconds" state.
 - **Preview data:** all live runs used the development preview catalog (60 countries, 54 beans, 27 drinks). Results must be re-checked once Member 3's catalog is connected; no code change is expected.
 - **Wording leaks:** in F1 one suggestion echoed the prompt's own phrase ("drinks coffee with milk") instead of the page's label ("Dairy milk"). Harmless, but the prompt could use the page's labels.
 - **Not yet testable:** saving/loading preferences and the shared save button need Member 3's accounts; a paid-access check is not added because the team has not chosen the paid feature.
