@@ -1,27 +1,73 @@
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { FeaturePlaceholder } from "@/components/feature-placeholder";
-import { CompassIcon } from "@/components/icons";
+import { buildLookup, type RecommendationLookup } from "@/modules/recommendations/lib/lookup";
+import { itemKey } from "@/modules/recommendations/lib/candidates";
+import type { RecommendationCatalog } from "@/modules/recommendations/server/catalog-source";
+import { CatalogState, StateLink } from "@/modules/map-experience/ui/catalog-state";
+import { PreviewNotice } from "@/modules/map-experience/ui/preview-notice";
+import { RecommendationForm } from "./recommendation-form";
+import type { InitialSearch } from "./search-context";
+import styles from "./recommendations.module.css";
 
-export function RecommendationScreen({ context }: { context?: { label: string; value: string }[] }) {
+/** Keeps only deep-link references the catalog actually has, so the form never offers a phantom place or item. */
+function resolveInitial(initial: InitialSearch, lookup: RecommendationLookup): { search: InitialSearch; dropped: boolean } {
+  const country = lookup.countries.find((entry) => entry.id === initial.countryId);
+  const regionOk = Boolean(country?.regions.some((region) => region.id === initial.regionId));
+  const startOk = initial.startingItem ? Boolean(lookup.items[itemKey(initial.startingItem)]) : false;
+  const search: InitialSearch = {
+    itemType: initial.itemType,
+    countryId: country ? country.id : null,
+    regionId: country && regionOk ? initial.regionId : null,
+    scope: initial.scope === "selected" && !country ? null : initial.scope,
+    startingItem: startOk ? initial.startingItem : null,
+  };
+  const dropped = (initial.countryId !== null && !country)
+    || (initial.regionId !== null && search.regionId === null)
+    || (initial.startingItem !== null && !startOk);
+  return { search, dropped };
+}
+
+export function RecommendationScreen({ catalog, initial }: { catalog: RecommendationCatalog; initial: InitialSearch }) {
   return (
     <div className="content-width interior-page">
       <Breadcrumbs items={[{ label: "Find your coffee" }]} />
-      <FeaturePlaceholder
-        label="Let your taste lead the way"
-        title="Your next cup starts with you."
-        description="Personalized recommendations are not available yet. This experience will connect your taste, drinking habits, and curiosity with beans and regional drinks from the atlas."
-        icon={<CompassIcon width={38} height={38} />}
-        primaryAction={{ href: "/explore", label: "Explore the atlas" }}
-        secondaryAction={{ href: "/", label: "Back to home" }}
-      >
-        {context && context.length > 0 && (
-          <div className="context-summary">
-            <p className="eyebrow">Your exploration context</p>
-            <dl>{context.map((item) => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl>
-            <p className="small-note">These selections have not been matched to catalog content yet.</p>
-          </div>
-        )}
-      </FeaturePlaceholder>
+      {catalog.status === "ready" ? (
+        <Ready lookup={buildLookup(catalog.snapshot)} preview={catalog.preview} initial={initial} />
+      ) : (
+        <div className={styles.stateWrap}>
+          <CatalogState
+            status={catalog.status}
+            headingLevel={1}
+            detail={catalog.status === "unavailable"
+              ? "Recommendations are chosen only from the atlas catalog, so they’ll appear here once it’s connected."
+              : "Recommendations need the catalog. Please try again in a moment."}
+          >
+            <StateLink href="/explore">Explore the atlas</StateLink>
+          </CatalogState>
+        </div>
+      )}
     </div>
+  );
+}
+
+function Ready({ lookup, preview, initial }: { lookup: RecommendationLookup; preview: boolean; initial: InitialSearch }) {
+  const { search, dropped } = resolveInitial(initial, lookup);
+  return (
+    <>
+      <header className={styles.intro}>
+        <p className="eyebrow">Let your taste lead the way</p>
+        <h1>Your next cup starts with you.</h1>
+        <p className={styles.lede}>
+          Tell us how you like your coffee. We’ll pick beans and regional drinks from the atlas and explain why each one might
+          suit you.
+        </p>
+      </header>
+      {preview ? <PreviewNotice /> : null}
+      {dropped ? (
+        <p className={styles.notice} role="note">
+          Part of the link you followed isn’t in the catalog, so we left it out. You can still choose everything below.
+        </p>
+      ) : null}
+      <RecommendationForm lookup={lookup} initial={search} />
+    </>
   );
 }
