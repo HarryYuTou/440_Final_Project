@@ -37,3 +37,5 @@ Local try-out: put `ENABLE_DEV_FIXTURES=true` and `MODEL_API_KEY=...` in `.env.l
 ## Tests
 
 `tests/unit/recommendations-service.test.ts` (fake model, no network): candidate selection, reference checks, the no-model `no-match` cases, validation and source filtering, the retry, failure mapping, the missing-key path, deep-link defaults and the display lookup.
+
+Live runs against Claude (normal and failure cases, screenshots, limitations) are recorded in [EVIDENCE.md](EVIDENCE.md).
