@@ -411,7 +411,14 @@ function Results({ outcome, lookup, canWiden, canBroaden, onRetry, onWiden, onBr
               {match.sourceIds.map((id) => {
                 const source = lookup.sources[id];
                 return source
-                  ? <a key={id} href={source.url} target="_blank" rel="noopener noreferrer">{source.title}<span className={styles.srOnly}> (opens in a new tab)</span></a>
+                  ? (
+                    <a key={id} href={source.url} target="_blank" rel="noopener noreferrer">
+                      {source.title}
+                      {/* Different publishers can share a title ("Origins: Ethiopia"). */}
+                      {source.publisher ? ` (${source.publisher})` : null}
+                      <span className={styles.srOnly}> (opens in a new tab)</span>
+                    </a>
+                  )
                   : <span key={id}>Source record unavailable</span>;
               })}
             </p>
