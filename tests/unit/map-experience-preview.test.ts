@@ -173,7 +173,8 @@ describe("map preview catalog content", () => {
       expect(url.hostname, source.id).not.toMatch(/(^|\.)example\.(invalid|com|org|net)$/);
       expect(source.url, source.id).not.toContain("example.invalid");
       expect(source.publisher, source.id).not.toBeNull();
-      expect(source.accessedAt, source.id).toBe("2026-10-16");
+      // Checked on 2026-10-16; dead links replaced on 2026-10-20 (see src/modules/catalog/README.md).
+      expect(["2026-10-16", "2026-10-20"], source.id).toContain(source.accessedAt);
     }
   });
 

@@ -1,9 +1,18 @@
 import "server-only";
-import { type ApiFailure, type ApiResult, type RecommendationResponse, type RecommendationService, success } from "@/contracts";
+import {
+  type AccountsService,
+  type ApiFailure,
+  type ApiResult,
+  FREE_RECOMMENDATION_LIMIT,
+  type RecommendationResponse,
+  type RecommendationService,
+  success,
+} from "@/contracts";
 import { type AiFailure, type GenerateStructured, generateStructured } from "@/lib/server/ai-client";
 import { checkReferences, hasUsablePreferences, selectCandidates } from "@/modules/recommendations/lib/candidates";
 import { modelOutputSchema, validateModelOutput } from "@/modules/recommendations/lib/model-output";
 import { buildRecommendationPrompt, RECOMMENDATION_SYSTEM } from "@/modules/recommendations/lib/prompt";
+import { accountsService } from "@/modules/accounts/server/service";
 import { loadRecommendationCatalog, type RecommendationCatalog } from "./catalog-source";
 
 const fail = (code: ApiFailure["error"]["code"], message: string, retryable: boolean): ApiFailure =>
@@ -30,11 +39,16 @@ const MAX_ATTEMPTS = 2;
 export function createRecommendationService(deps: {
   loadCatalog: () => Promise<RecommendationCatalog>;
   generate: GenerateStructured;
+  /**
+   * The paid benefit: FREE_RECOMMENDATION_LIMIT model answers per signed-in
+   * user, unlimited after the one-time unlock. Checked on the server before
+   * the model is called; only an answer with matches uses up a free one.
+   * Omitted only in tests that exercise the recommendation logic alone.
+   */
+  quota?: Pick<AccountsService, "getRecommendationAllowance" | "recordRecommendationUse">;
 }): RecommendationService {
   return {
-    // Not a paid feature yet. If the team makes it the paid benefit, check
-    // services.accounts.getAccess(request) here before calling the model.
-    async recommend(_request, input): Promise<ApiResult<RecommendationResponse>> {
+    async recommend(request, input): Promise<ApiResult<RecommendationResponse>> {
       const catalog = await deps.loadCatalog();
       if (catalog.status === "unavailable") return fail("SERVICE_UNAVAILABLE", "The coffee catalog isn’t connected yet.", false);
       if (catalog.status === "error") return fail("INTERNAL_ERROR", "We couldn’t load the coffee catalog right now.", true);
@@ -67,6 +81,18 @@ export function createRecommendationService(deps: {
         });
       }
 
+      if (deps.quota) {
+        const allowance = await deps.quota.getRecommendationAllowance(request);
+        if (!allowance.ok) {
+          return allowance.error.code === "UNAUTHENTICATED"
+            ? fail("UNAUTHENTICATED", `Sign in to get AI recommendations. Your first ${FREE_RECOMMENDATION_LIMIT} are free.`, false)
+            : allowance;
+        }
+        if (!allowance.data.paid && allowance.data.freeRemaining <= 0) {
+          return fail("FORBIDDEN", `You’ve used your ${FREE_RECOMMENDATION_LIMIT} free recommendations. Unlock unlimited recommendations to keep going.`, false);
+        }
+      }
+
       let retryProblem: string | undefined;
       for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
         const answer = await deps.generate({
@@ -79,7 +105,13 @@ export function createRecommendationService(deps: {
           return aiFailure(answer.failure);
         }
         const checked = validateModelOutput(answer.data, set.candidates, input.limit);
-        if (checked.ok) return success(checked.response);
+        if (checked.ok) {
+          if (deps.quota && checked.response.status === "matches") {
+            const recorded = await deps.quota.recordRecommendationUse(request);
+            if (!recorded.ok) return recorded;
+          }
+          return success(checked.response);
+        }
         retryProblem = checked.problem;
       }
       return aiFailure({ kind: "invalid-output" });
@@ -90,4 +122,5 @@ export function createRecommendationService(deps: {
 export const recommendationService: RecommendationService = createRecommendationService({
   loadCatalog: loadRecommendationCatalog,
   generate: generateStructured,
+  quota: accountsService,
 });

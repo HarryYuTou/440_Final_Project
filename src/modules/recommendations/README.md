@@ -27,12 +27,12 @@ Local try-out: put `ENABLE_DEV_FIXTURES=true` and `MODEL_API_KEY=...` in `.env.l
 
 ## Page
 
-`ui/recommendation-form.tsx` (client): item type, search area (asked explicitly when the link carries a place but no `scope`), starting item (removable), acidity / sweetness / roast / milk, flavor chips plus free-text flavors, preparation methods and free-text notes. It pre-fills from `GET /api/preferences` when accounts are connected and can save via `PUT /api/preferences` (401 → sign-in hint, 503 → "isn't available yet"). Results link to the bean/drink pages, list reasons, trade-offs and sources, and use the map module's stand-in `SaveButton`.
+`ui/recommendation-form.tsx` (client): item type, search area (asked explicitly when the link carries a place but no `scope`), starting item (removable), acidity / sweetness / roast / milk, flavor chips plus free-text flavors, preparation methods and free-text notes. It pre-fills from `GET /api/preferences` when accounts are connected and can save via `PUT /api/preferences` (401 → sign-in hint, 503 → "isn't available yet"). Results link to the bean/drink pages, list reasons, trade-offs and sources, and use the shared `SaveAction` from the accounts module.
 
 ## Integration notes
 
-- **Member 3:** when the shared save action lands, replace the `SaveButton` import in `ui/recommendation-form.tsx` too. Nothing else here needs to change when the real catalog and accounts are connected. The SDK is a new dependency in `package.json`.
-- **Paid benefit:** not enforced. If the team makes recommendations the paid feature, check `services.accounts.getAccess(request)` at the top of `recommend` in `server/service.ts`.
+- **Member 3:** the real catalog and accounts are connected, and the form uses the shared `SaveAction`.
+- **Paid benefit (agreed):** a signed-in user gets 3 free recommendations, then needs the one-time unlock. `recommend` checks `quota.getRecommendationAllowance(request)` after the free no-model checks and before the model call (401 signed out, 403 quota used up), and calls `recordRecommendationUse` only for an answer with matches. The form shows Sign in / See the unlock links for those errors, and the accounts module's `AllowanceNote` under the buttons says up front how many free ones are left. Tests: `tests/unit/recommendations-quota.test.ts`.
 
 ## Tests
 

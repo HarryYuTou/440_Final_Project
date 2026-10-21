@@ -82,7 +82,7 @@
 .stop[data-active] .stopNumber { background: #30352b; }
 .stopBody { min-width: 0; }
 .stopBody h3 { font-family: var(--serif); font-weight: 400; font-size: 21px; margin-top: 4px; }
-.stopBody h3 a:hover, .tryLine a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.stopBody h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .tryLine { margin-top: 6px; font-size: 14px; font-weight: 600; }
 .tryLine a { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #c9b7a6; }
 .kind { font-weight: 400; color: var(--muted); font-size: 12px; }

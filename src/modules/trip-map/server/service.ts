@@ -3,9 +3,7 @@ import {
   type AccountsService,
   type ApiFailure,
   type ApiResult,
-  type Preferences,
-  type SavedItem,
-  type SessionState,
+  type PlanningContext,
   success,
   type TripItinerary,
   type TripResponse,
@@ -15,7 +13,7 @@ import { type AiFailure, type GenerateStructured, generateStructured } from "@/l
 import { accountsService } from "@/modules/accounts/server/service";
 import { hasUsablePreferences } from "@/modules/recommendations/lib/candidates";
 import { loadRecommendationCatalog, type RecommendationCatalog } from "@/modules/recommendations/server/catalog-source";
-import { buildDestinations, resolveSaved } from "@/modules/trip-map/lib/destinations";
+import { buildDestinations, hasViableTrip, resolveSaved } from "@/modules/trip-map/lib/destinations";
 import { tripModelOutputSchema, validateTripOutput } from "@/modules/trip-map/lib/model-output";
 import { buildTripPrompt, TRIP_SYSTEM } from "@/modules/trip-map/lib/prompt";
 
@@ -43,37 +41,7 @@ const MAX_ATTEMPTS = 2;
 /** Off until the team picks the trip map as the paid benefit (TEAM_BRANCH_PLAN.md §6.8). */
 export const tripRequiresAccess = () => process.env.TRIP_REQUIRES_ACCESS?.trim() === "true";
 
-type AccountReads = Pick<AccountsService, "getSession" | "getPreferences" | "listSaved" | "getAccess">;
-
-async function safeSession(accounts: AccountReads, request: Request): Promise<SessionState> {
-  try {
-    return await accounts.getSession(request);
-  } catch {
-    return { status: "unavailable", user: null };
-  }
-}
-
-/** Account preferences and saved items, read only for a verified signed-in session. */
-async function readAccount(accounts: AccountReads, request: Request, session: SessionState, wantSaved: boolean) {
-  let preferences: Preferences | null = null;
-  let saved: SavedItem[] = [];
-  if (session.status !== "signed-in") return { preferences, saved };
-  try {
-    const result = await accounts.getPreferences(request);
-    if (result.ok) preferences = result.data;
-  } catch {
-    // Treated as no saved preferences; the form can still send them.
-  }
-  if (wantSaved) {
-    try {
-      const result = await accounts.listSaved(request);
-      if (result.ok) saved = result.data;
-    } catch {
-      // Treated as no saved items.
-    }
-  }
-  return { preferences, saved };
-}
+type AccountReads = Pick<AccountsService, "getPlanningContext" | "getAccess">;
 
 export function createTripService(deps: {
   loadCatalog: () => Promise<RecommendationCatalog>;
@@ -95,21 +63,36 @@ export function createTripService(deps: {
       if (catalog.status === "unavailable") return fail("SERVICE_UNAVAILABLE", "The coffee catalog isn’t connected yet.", false);
       if (catalog.status === "error") return fail("INTERNAL_ERROR", "We couldn’t load the coffee catalog right now.", true);
 
-      const session = await safeSession(deps.accounts, request);
-      const account = await readAccount(deps.accounts, request, session, input.useSavedItems);
+      let account: PlanningContext = { preferences: null, saved: [] };
+      let accountStatus: "signed-in" | "signed-out" | null = null;
+      // An explicit form value (including an empty one) wins over account taste.
+      // Read saved input only through the account service, and never hide a failed read.
+      if (input.preferences === undefined || input.useSavedItems) {
+        const context = await deps.accounts.getPlanningContext(request).catch(() =>
+          fail("SERVICE_UNAVAILABLE", "We couldn’t load your saved preferences and coffee. Please try again.", true));
+        if (context.ok) {
+          account = context.data;
+          accountStatus = "signed-in";
+        } else if (context.error.code === "UNAUTHENTICATED") {
+          // Signed-out visitors can still plan from their form when the paid gate is off.
+          accountStatus = "signed-out";
+        } else {
+          return context;
+        }
+      }
       const preferences = input.preferences ?? account.preferences;
       const usablePreferences = preferences && hasUsablePreferences(preferences) ? preferences : null;
       const saved = input.useSavedItems ? resolveSaved(catalog.snapshot, account.saved) : [];
 
       if (!usablePreferences && saved.length === 0) {
         const suggestions = ["Pick a flavor you enjoy, such as chocolate or fruity.", "Describe your usual coffee in the notes."];
-        if (session.status === "signed-out") suggestions.push("Sign in to plan around the beans and drinks you saved.");
-        if (session.status === "signed-in") suggestions.push("Save a few beans or drinks from the map, then plan again.");
+        if (accountStatus === "signed-out") suggestions.push("Sign in to plan around the beans and drinks you saved.");
+        if (accountStatus === "signed-in") suggestions.push("Save a few beans or drinks from the map, then plan again.");
         return success({ status: "no-trip", reason: "We need a preference or a saved item to plan a trip for you.", suggestions });
       }
 
       const destinations = buildDestinations(catalog.snapshot, saved);
-      if (destinations.length < 2) {
+      if (!hasViableTrip(destinations)) {
         return success({
           status: "no-trip",
           reason: "The atlas doesn’t cover enough places yet to plan a trip.",

@@ -1,7 +1,12 @@
-import { unavailable } from "@/contracts";
-import { respond } from "@/lib/server/http";
+import { respond, safeRoute } from "@/lib/server/http";
+import { handleStripeWebhook } from "@/modules/accounts/server/service";
 
-/** Member 3 must verify the raw body/signature and persist idempotently before returning success. */
-export function POST(): Response {
-  return respond(unavailable("Stripe webhook verification"));
+export const dynamic = "force-dynamic";
+
+/**
+ * Verifies the Stripe-Signature over the raw body, then applies the event
+ * idempotently. A failed write answers 500 so Stripe retries the delivery.
+ */
+export async function POST(request: Request): Promise<Response> {
+  return safeRoute(async () => respond(await handleStripeWebhook(request)));
 }

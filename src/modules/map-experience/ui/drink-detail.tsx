@@ -11,7 +11,7 @@ import { Section } from "./item-sections";
 import { PairingList } from "./pairing-list";
 import { PreviewNotice } from "./preview-notice";
 import { RecommendLink } from "./recommend-link";
-import { SaveButton } from "./save-button";
+import { SaveAction } from "@/modules/accounts/ui/save-action";
 import { SourceList } from "./source-list";
 
 interface Association {
@@ -53,7 +53,7 @@ export function DrinkDetail({ drink, index, preview }: { drink: Drink; index: Ca
           <h1>{drink.name}</h1>
           <p className={styles.lead}>{drink.description}</p>
           <div className={styles.actions}>
-            <SaveButton itemType="drink" itemId={drink.id} itemName={drink.name} />
+            <SaveAction itemType="drink" itemId={drink.id} itemName={drink.name} />
             <RecommendLink variant="text" context={{ type: "both", scope: "global", drinkId: drink.id }}>
               Get recommendations like this
             </RecommendLink>

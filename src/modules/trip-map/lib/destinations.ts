@@ -30,6 +30,20 @@ export interface Destination {
   hasSaved: boolean;
 }
 
+/** A two-stop trip needs non-overlapping places and two different things to try. */
+export function hasViableTrip(destinations: readonly Destination[]): boolean {
+  for (let left = 0; left < destinations.length; left += 1) {
+    const first = destinations[left];
+    for (let right = left + 1; right < destinations.length; right += 1) {
+      const second = destinations[right];
+      if (first.key === second.key) continue;
+      if (first.countryId === second.countryId && (first.regionId === null || second.regionId === null)) continue;
+      if (first.items.some((a) => second.items.some((b) => itemKey(a.item) !== itemKey(b.item)))) return true;
+    }
+  }
+  return false;
+}
+
 const MAX_DESCRIPTION = 220;
 
 function short(text: string | null): string | null {

@@ -103,3 +103,4 @@ export type Country = z.infer<typeof countrySchema>;
 export type Region = z.infer<typeof regionSchema>;
 export type Source = z.infer<typeof sourceSchema>;
 export type Pairing = z.infer<typeof pairingSchema>;
+export type LocationReference = z.infer<typeof locationReferenceSchema>;

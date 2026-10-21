@@ -1,61 +1,94 @@
+import "server-only";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { FeaturePlaceholder } from "@/components/feature-placeholder";
-import { BookmarkIcon, CupIcon } from "@/components/icons";
+import { catalogService } from "@/modules/catalog/server/service";
+import { beanPath, drinkPath } from "@/modules/map-experience/lib/links";
+import { AccountPanel } from "./account-panel";
+import { AuthForm } from "./auth-form";
+import { CheckoutResult } from "./checkout-result";
+import { type SavedLookup, SavedList } from "./saved-list";
+import { UpgradePanel } from "./upgrade-panel";
+import styles from "./accounts.module.css";
 
-type AccountView = "login" | "signup" | "account" | "saved" | "upgrade" | "checkout-result";
+export type AccountView =
+  | { view: "login" | "signup"; next: string | null }
+  | { view: "account" | "saved" }
+  | { view: "upgrade"; includesTrips?: boolean }
+  | { view: "checkout-result"; sessionId: string | null; canceled: boolean };
 
-const content: Record<AccountView, { breadcrumb: string; label: string; title: string; description: string }> = {
+const content: Record<AccountView["view"], { breadcrumb: string; label: string; title: string; description: string }> = {
   login: {
     breadcrumb: "Sign in",
     label: "Your coffee atlas",
     title: "Good to see you here.",
-    description: "Sign-in is not available yet. Account access will let you return to your preferences and saved coffee discoveries.",
+    description: "Sign in to return to your preferences, saved coffee and recommendations.",
   },
   signup: {
     breadcrumb: "Create an account",
     label: "Your coffee atlas",
     title: "Make room for a little discovery.",
-    description: "Registration is not available yet. Once accounts are ready, you’ll be able to keep your preferences and discoveries together.",
+    description: "An account keeps your taste preferences and saved beans and drinks together, and includes 3 free AI recommendations.",
   },
   account: {
     breadcrumb: "Account",
     label: "A taste of your own",
     title: "Your journey, all in one place.",
-    description: "Account details and saved preferences are not available yet. No personal information is collected on this preview page.",
+    description: "Your details, recommendation plan and saved taste preferences.",
   },
   saved: {
     breadcrumb: "Saved",
     label: "Keep your curiosity close",
     title: "A collection worth coming back to.",
-    description: "Saved collections are not available yet. This will be the place to return to the beans and drinks you want to try.",
+    description: "The beans and drinks you want to try, saved from the atlas and your recommendations.",
   },
   upgrade: {
     breadcrumb: "Plans",
     label: "More to explore",
-    title: "A little more is on the way.",
-    description: "Plans and checkout are not available yet. Paid features and pricing will appear here once they have been defined.",
+    title: "Keep the recommendations coming.",
+    description: "Every account gets 3 AI recommendations free. One payment unlocks unlimited recommendations.",
   },
   "checkout-result": {
     breadcrumb: "Checkout status",
     label: "Checkout status",
-    title: "No payment has been confirmed.",
-    description: "Checkout is not connected in this preview. This page does not confirm a payment or change your account access.",
+    title: "Your checkout",
+    description: "Access changes only after Stripe confirms the payment to our server.",
   },
 };
 
-export function AccountScreen({ view }: { view: AccountView }) {
-  const selected = content[view];
+/** Names and links for saved items; the saved list itself is read in the browser for the signed-in user. */
+async function savedLookup(): Promise<SavedLookup> {
+  const result = await catalogService.list({});
+  if (!result.ok) return {};
+  const countries = new Map(result.data.countries.map((country) => [country.id, country.name]));
+  const regions = new Map(result.data.regions.map((region) => [region.id, region.name]));
+  const lookup: SavedLookup = {};
+  for (const bean of result.data.beans) {
+    const place = [bean.origin.regionId ? regions.get(bean.origin.regionId) : null, countries.get(bean.origin.countryId)].filter(Boolean).join(", ");
+    lookup[`bean:${bean.id}`] = { name: bean.name, href: beanPath(bean.id), place: place || null };
+  }
+  for (const drink of result.data.drinks) {
+    const place = [...new Set(drink.associatedLocations.map((location) => countries.get(location.countryId)))].filter(Boolean).join(", ");
+    lookup[`drink:${drink.id}`] = { name: drink.name, href: drinkPath(drink.id), place: place || null };
+  }
+  return lookup;
+}
+
+export async function AccountScreen(props: AccountView) {
+  const selected = content[props.view];
   return (
     <div className="content-width interior-page">
       <Breadcrumbs items={[{ label: selected.breadcrumb }]} />
-      <FeaturePlaceholder
-        label={selected.label}
-        title={selected.title}
-        description={selected.description}
-        icon={view === "saved" ? <BookmarkIcon width={36} height={36} /> : <CupIcon width={36} height={36} />}
-        primaryAction={{ href: "/explore", label: "Explore the atlas" }}
-        secondaryAction={view === "login" ? { href: "/signup", label: "About creating an account" } : { href: "/", label: "Back to home" }}
-      />
+      <header className={styles.intro}>
+        <p className="eyebrow">{selected.label}</p>
+        <h1>{selected.title}</h1>
+        <p className={styles.lede}>{props.view === "upgrade" && props.includesTrips
+          ? "Every account gets 3 AI recommendations free. One payment unlocks unlimited recommendations and AI trip planning."
+          : selected.description}</p>
+      </header>
+      {props.view === "login" || props.view === "signup" ? <AuthForm mode={props.view} next={props.next} /> : null}
+      {props.view === "account" ? <AccountPanel /> : null}
+      {props.view === "saved" ? <SavedList lookup={await savedLookup()} /> : null}
+      {props.view === "upgrade" ? <UpgradePanel includesTrips={props.includesTrips} /> : null}
+      {props.view === "checkout-result" ? <CheckoutResult sessionId={props.sessionId} canceled={props.canceled} /> : null}
     </div>
   );
 }

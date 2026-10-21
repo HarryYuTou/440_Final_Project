@@ -46,7 +46,7 @@ export default function HomePage() {
       </section>
       <aside className="preview-banner content-width" aria-label="Project status">
         <span className="preview-label"><span aria-hidden="true" />Project preview</span>
-        <p>Take a look around. Maps, curated coffee guides, and personalized recommendations are still being built.</p>
+        <p>The atlas, coffee guides and AI recommendations are live. An AI coffee trip map is on the way.</p>
       </aside>
     </div>
   );

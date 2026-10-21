@@ -43,3 +43,48 @@ export type PaidAccess = {
 export const checkoutInputSchema = z.strictObject({ capability: z.literal(PAID_CAPABILITY) });
 export type CheckoutInput = z.infer<typeof checkoutInputSchema>;
 export interface CheckoutSession { url: string }
+/** What the one-time unlock costs, read from the configured Stripe price. Amount is in the currency's minor unit. */
+export interface CheckoutOffer {
+  capability: typeof PAID_CAPABILITY;
+  price: { unitAmount: number; currency: string } | null;
+}
+
+/** Registration and sign-in bodies for /api/auth/*. Passwords never leave the server after this. */
+export const signUpInputSchema = z.strictObject({
+  email: z.email().max(254),
+  password: z.string().min(8).max(200),
+  displayName: z.string().trim().min(1).max(60).nullable(),
+});
+export const signInInputSchema = z.strictObject({
+  email: z.email().max(254),
+  password: z.string().min(1).max(200),
+});
+export type SignUpInput = z.infer<typeof signUpInputSchema>;
+export type SignInInput = z.infer<typeof signInInputSchema>;
+
+/**
+ * The agreed paid benefit: every signed-in user gets this many AI
+ * recommendations free; a one-time Stripe test payment for PAID_CAPABILITY
+ * unlocks unlimited recommendations.
+ */
+export const FREE_RECOMMENDATION_LIMIT = 3;
+export interface RecommendationAllowance {
+  paid: boolean;
+  freeLimit: number;
+  freeUsed: number;
+  /** 0 once the free quota is used; irrelevant when paid. */
+  freeRemaining: number;
+}
+
+/** Server-only input for the AI trip map: the current user's stored taste and saves. */
+export interface PlanningContext {
+  preferences: Preferences | null;
+  saved: SavedItem[];
+}
+
+export const checkoutSessionIdSchema = z.string().regex(/^cs_(test|live)_[A-Za-z0-9]{1,250}$/);
+export type CheckoutStatus = "open" | "processing" | "paid" | "failed" | "expired";
+export interface CheckoutState {
+  status: CheckoutStatus;
+  access: PaidAccess;
+}

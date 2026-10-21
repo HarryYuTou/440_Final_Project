@@ -333,11 +333,13 @@ describe("production isolation", () => {
     for (const call of previewSource.mock.results) expect(call.value).toBeNull();
   });
 
-  it("uses the unmodified foundation service, which is unavailable, without preview data in production", async () => {
+  it("uses the connected catalog service, never preview data, in production", async () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("ENABLE_DEV_FIXTURES", "true");
-    expect(await loadCatalog()).toEqual({ status: "unavailable" });
-    expect(await loadBean("example-bean")).toEqual({ status: "unavailable" });
-    expect(await loadDrink("example-drink")).toEqual({ status: "unavailable" });
+    const load = await loadCatalog();
+    expect(load).toMatchObject({ status: "ready", preview: false });
+    expect(await loadBean("example-bean")).toEqual({ status: "not-found" });
+    expect(await loadDrink("example-drink")).toEqual({ status: "not-found" });
+    expect(previewSource).not.toHaveBeenCalled();
   });
 });

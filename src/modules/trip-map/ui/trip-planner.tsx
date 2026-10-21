@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useEffect, useId, useState } from "react";
+import { type FormEvent, useEffect, useId, useReducer, useState } from "react";
 import { ArrowIcon } from "@/components/icons";
 import {
   type ApiResult,
@@ -11,10 +11,10 @@ import {
   TRIP_MIN_STOPS,
   type TripItinerary,
   type TripResponse,
-  tripRequestSchema,
 } from "@/contracts";
-import { SaveButton } from "@/modules/map-experience/ui/save-button";
+import { SaveAction } from "@/modules/accounts/ui/save-action";
 import { itemKey, placeKey } from "@/modules/trip-map/lib/destinations";
+import { initialTripForm, tripFormReducer, tripRequestFromForm } from "@/modules/trip-map/lib/form-state";
 import type { TripLookup } from "@/modules/trip-map/lib/lookup";
 import { type GlobeStop, TripGlobe } from "./trip-globe";
 import styles from "./trip.module.css";
@@ -35,16 +35,7 @@ const ROASTS = [
 const STOP_COUNTS = Array.from({ length: TRIP_MAX_STOPS - TRIP_MIN_STOPS + 1 }, (_, index) => TRIP_MIN_STOPS + index);
 const MAX_NOTES = 1000;
 
-const EMPTY: Preferences = {
-  acidity: "any", sweetness: "any", roast: "any", milk: "any", flavors: [], preparationMethods: [], notes: "",
-};
-
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
-
-/** Same rule as the server (recommendations/lib/candidates.ts hasUsablePreferences). */
-const saysSomething = (p: Preferences) =>
-  p.acidity !== "any" || p.sweetness !== "any" || p.roast !== "any" || p.milk !== "any"
-  || p.flavors.length > 0 || p.preparationMethods.length > 0 || p.notes.trim().length > 0;
 
 type Outcome =
   | { kind: "idle" }
@@ -97,10 +88,8 @@ function Chips<T extends string>({ legend, name, value, options, onChange }: {
 
 export function TripPlanner({ lookup }: { lookup: TripLookup }) {
   const formId = useId();
-  const [preferences, setPreferences] = useState<Preferences>(EMPTY);
-  const [stopCount, setStopCount] = useState(4);
-  const [useSaved, setUseSaved] = useState(true);
-  const [loadedSaved, setLoadedSaved] = useState(false);
+  const [form, dispatch] = useReducer(tripFormReducer, initialTripForm);
+  const { preferences, stopCount, useSavedItems: useSaved, loadedSaved } = form;
   const [outcome, setOutcome] = useState<Outcome>({ kind: "idle" });
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -113,29 +102,22 @@ export function TripPlanner({ lookup }: { lookup: TripLookup }) {
         if (!active || response.status !== 200 || !envelope?.ok || !envelope.data) return;
         const parsed = preferencesSchema.safeParse(envelope.data);
         if (!parsed.success) return;
-        setPreferences(parsed.data);
-        setLoadedSaved(true);
+        dispatch({ type: "prefill", preferences: parsed.data });
       })
       .catch(() => {});
     return () => { active = false; };
   }, []);
 
   const update = <K extends keyof Preferences>(key: K, value: Preferences[K]) =>
-    setPreferences((current) => ({ ...current, [key]: value }));
+    dispatch({ type: "preferences", patch: { [key]: value } });
 
   const toggleFlavor = (flavor: string) =>
-    setPreferences((current) => ({
-      ...current,
-      flavors: current.flavors.includes(flavor) ? current.flavors.filter((entry) => entry !== flavor) : [...current.flavors, flavor].slice(0, 12),
-    }));
+    dispatch({ type: "flavor", flavor });
 
   async function plan() {
-    // Empty answers are left out, so the server can fall back to the account's saved preferences.
-    const request = tripRequestSchema.safeParse({
-      ...(saysSomething(preferences) ? { preferences } : {}),
-      stopCount,
-      useSavedItems: useSaved,
-    });
+    if (outcome.kind === "loading") return;
+    dispatch({ type: "submit" });
+    const request = tripRequestFromForm(form);
     if (!request.success) {
       setProblem("Some of your answers are too long. Shorten the notes and try again.");
       return;
@@ -202,14 +184,14 @@ export function TripPlanner({ lookup }: { lookup: TripLookup }) {
               <div className={styles.chips}>
                 {STOP_COUNTS.map((count) => (
                   <label key={count} className={styles.chip}>
-                    <input type="radio" name="stops" checked={stopCount === count} onChange={() => setStopCount(count)} />
+                    <input type="radio" name="stops" checked={stopCount === count} onChange={() => dispatch({ type: "stops", count })} />
                     <span>{count}</span>
                   </label>
                 ))}
               </div>
             </fieldset>
             <label className={styles.checkbox}>
-              <input type="checkbox" checked={useSaved} onChange={(event) => setUseSaved(event.target.checked)} />
+              <input type="checkbox" checked={useSaved} onChange={(event) => dispatch({ type: "saved-items", enabled: event.target.checked })} />
               <span>Plan around the beans and drinks I saved (when signed in)</span>
             </label>
           </div>
@@ -340,7 +322,7 @@ function Itinerary({ itinerary, lookup }: { itinerary: TripItinerary; lookup: Tr
                   </p>
                   <div className={styles.stopActions}>
                     {place ? <Link className="text-link" href={place.href}>Explore {place.name}<ArrowIcon /></Link> : null}
-                    <SaveButton itemType={stop.recommendation.itemType} itemId={stop.recommendation.itemId} itemName={itemName} />
+                    <SaveAction itemType={stop.recommendation.itemType} itemId={stop.recommendation.itemId} itemName={itemName} />
                   </div>
                 </div>
               </li>

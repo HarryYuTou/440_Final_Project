@@ -17,6 +17,13 @@ export function respond<T>(result: ApiResult<T>): Response {
   return Response.json(result, { status: result.ok ? 200 : errorStatus[result.error.code], headers });
 }
 
+/** Same as respond, plus a Set-Cookie header (session sign-in and sign-out). */
+export function respondWithCookie<T>(result: ApiResult<T>, cookie: string | null): Response {
+  const response = respond(result);
+  if (cookie) response.headers.append("Set-Cookie", cookie);
+  return response;
+}
+
 export function unavailableWithState<T>(feature: string, state: T): Response {
   return Response.json({ ...unavailable(feature), state }, { status: 503, headers });
 }
