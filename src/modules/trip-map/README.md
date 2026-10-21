@@ -55,4 +55,17 @@ End-to-end check (2026-10-20), `npm run dev` with the preview catalog and a loca
 | `stopCount: 9` / client-sent `savedItems` | 400 `INVALID_INPUT` |
 | Real key not set (production smoke) | 503 `SERVICE_UNAVAILABLE`; `/trip` shows "The coffee catalog isn’t connected yet." |
 
-Still to record with a real `MODEL_API_KEY`: a live run of the normal case and a conflicting-preferences case (as in `recommendations/EVIDENCE.md`).
+### Live runs (2026-10-20, real model)
+
+`npm run dev` with the preview catalog and a real `MODEL_API_KEY` (default model `claude-sonnet-5-5`, `MODEL_NAME` unset). Model output is not deterministic, so a rerun gives different stops and wording; the checks stay the same.
+
+| # | Input | Result | Screenshots |
+|---|---|---|---|
+| L1 | Flavors chocolate + fruity, 4 stops, no notes | 200 `itinerary` "Chocolate and Fruit Coffee Trip": 4 stops starting Harar, Ethiopia (Harar Natural) → Mount Elgon (Bugisu), Uganda (Bugisu Washed), ending in India. Each reason cites flavor notes from the catalog record; sources shown; pins and route drawn | [form](evidence/normal-form.jpg), [route](evidence/normal-route.jpg) |
+| L2 | Same flavors + note "It needs to be very sour, yet not sour at all." | 200 `itinerary` "Fruity and Chocolatey East Africa Route". The summary names the contradiction and says the plan leans on the clear flavor preferences with moderate acidity; reasons mention the natural process as the softer-acidity choice. No invented places or items | [form](evidence/conflicting-form.jpg), [route](evidence/conflicting-route.jpg) |
+
+Observations for the write-up:
+
+- **Conflicting notes:** the model resolved the contradiction openly (using the unambiguous flavor choices) rather than returning `no-trip`. The prompt allows either; the explanation is shown to the user, so this is acceptable. The recommendations module answered a similar case with `no-match` (`recommendations/EVIDENCE.md` F1); if the team wants the two features to behave the same, tighten the `no-trip` rule in `lib/prompt.ts`.
+- **Route order:** in L1 the last leg crosses back over the second stop to reach India. Ordering is the model's choice (the validator checks places, not geography). A possible improvement is to reorder stops on the server by nearest neighbour after validation.
+- **Close stops:** in L2 stops 3 and 4 sit close together near the same border, so their pins overlap at this zoom. They are separate catalog places, so the validator accepts them; zooming in separates the pins.
