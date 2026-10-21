@@ -30,8 +30,11 @@ function source(id: string, title: string, url: string, publisher: string): Sour
   return { id, title, url, publisher, accessedAt: ACCESSED_AT };
 }
 
-/** Sources that replaced dead links (the Wikipedia pages for Burundi, Myanmar and Nepal coffee do not exist). */
-const replaced = (record: Source): Source => ({ ...record, accessedAt: "2026-10-20" });
+/**
+ * Sources added on 2026-10-20: replacements for dead links (the Wikipedia pages for
+ * Burundi, Myanmar and Nepal coffee do not exist) and the sources of the enrichment pass.
+ */
+const later = (record: Source): Source => ({ ...record, accessedAt: "2026-10-20" });
 const wikipedia = (id: string, article: string, title: string) =>
   source(id, title, `https://en.wikipedia.org/wiki/${article}`, "Wikipedia");
 const cafeImports = (id: string, origin: string) =>
@@ -122,8 +125,8 @@ const SOURCES: Source[] = [
   wikipedia("src-wikipedia-coffee-bolivia", "Coffee_production_in_Bolivia", "Coffee production in Bolivia"),
   wikipedia("src-wikipedia-coffee-ecuador", "Coffee_production_in_Ecuador", "Coffee production in Ecuador"),
   wikipedia("src-wikipedia-coffee-rwanda", "Coffee_production_in_Rwanda", "Coffee production in Rwanda"),
-  replaced(sucafina("src-sucafina-burundi", "Burundi", "burundi")),
-  replaced(wikipedia("src-wikipedia-economy-burundi", "Economy_of_Burundi", "Economy of Burundi")),
+  later(sucafina("src-sucafina-burundi", "Burundi", "burundi")),
+  later(wikipedia("src-wikipedia-economy-burundi", "Economy_of_Burundi", "Economy of Burundi")),
   wikipedia("src-wikipedia-coffee-uganda", "Coffee_production_in_Uganda", "Coffee production in Uganda"),
   wikipedia("src-wikipedia-coffee-tanzania", "Coffee_production_in_Tanzania", "Coffee production in Tanzania"),
   wikipedia("src-wikipedia-coffee-india", "Coffee_production_in_India", "Coffee production in India"),
@@ -139,15 +142,13 @@ const SOURCES: Source[] = [
   wikipedia("src-wikipedia-mount-elgon", "Mount_Elgon", "Mount Elgon"),
   wikipedia("src-wikipedia-kilimanjaro", "Mount_Kilimanjaro", "Mount Kilimanjaro"),
   wikipedia("src-wikipedia-bolaven", "Bolaven_Plateau", "Bolaven Plateau"),
-  wikipedia("src-wikipedia-coffee", "Coffee", "Coffee"),
-  wikipedia("src-wikipedia-coffea-canephora", "Coffea_canephora", "Coffea canephora"),
   wikipedia("src-wikipedia-coffee-cuba", "Coffee_production_in_Cuba", "Coffee production in Cuba"),
   wikipedia("src-wikipedia-coffee-haiti", "Coffee_production_in_Haiti", "Coffee production in Haiti"),
   wikipedia("src-wikipedia-coffee-venezuela", "Coffee_production_in_Venezuela", "Coffee production in Venezuela"),
-  replaced(sucafina("src-sucafina-myanmar", "Myanmar", "myanmar")),
-  replaced(wikipedia("src-wikipedia-ywangan", "Ywangan_Township", "Ywangan Township")),
-  replaced(wikipedia("src-wikipedia-pyin-oo-lwin", "Pyin_Oo_Lwin", "Pyin Oo Lwin")),
-  replaced(wikipedia("src-wikipedia-gulmi", "Gulmi_District", "Gulmi District")),
+  later(sucafina("src-sucafina-myanmar", "Myanmar", "myanmar")),
+  later(wikipedia("src-wikipedia-ywangan", "Ywangan_Township", "Ywangan Township")),
+  later(wikipedia("src-wikipedia-pyin-oo-lwin", "Pyin_Oo_Lwin", "Pyin Oo Lwin")),
+  later(wikipedia("src-wikipedia-gulmi", "Gulmi_District", "Gulmi District")),
   wikipedia("src-wikipedia-coffee-leaf-rust", "Coffee_leaf_rust", "Coffee leaf rust"),
   wikipedia("src-wikipedia-coffee-culture", "Coffee_culture", "Coffee culture"),
   wikipedia("src-wikipedia-canned-coffee", "Canned_coffee", "Canned coffee"),
@@ -165,6 +166,53 @@ const SOURCES: Source[] = [
   wikipedia("src-wikipedia-arabic-coffee", "Arabic_coffee", "Arabic coffee"),
   wikipedia("src-wikipedia-cafe-cubano", "Café_Cubano", "Café cubano"),
   wikipedia("src-wikipedia-white-coffee", "Ipoh_white_coffee", "Ipoh white coffee"),
+  later(source("src-cafeimports-honduras", "Origins: Honduras", "https://www.cafeimports.com/europe/honduras", "Cafe Imports")),
+  later(source("src-cafeimports-mexico", "Origins: Mexico", "https://www.cafeimports.com/europe/mexico", "Cafe Imports")),
+  later(source("src-cafeimports-costa-rica", "Origins: Costa Rica", "https://www.cafeimports.com/europe/costa-rica", "Cafe Imports")),
+  later(source("src-cafeimports-peru", "Origins: Peru", "https://www.cafeimports.com/europe/peru", "Cafe Imports")),
+  later(source("src-cafeimports-india", "Origins: India", "https://www.cafeimports.com/europe/india", "Cafe Imports")),
+  later(source("src-cafeimports-malawi", "Origins: Malawi", "https://www.cafeimports.com/europe/malawi", "Cafe Imports")),
+  later(source("src-cafeimports-el-salvador", "Origins: El Salvador", "https://www.cafeimports.com/europe/el-salvador", "Cafe Imports")),
+  later(source("src-cafeimports-bolivia", "Origins: Bolivia", "https://www.cafeimports.com/europe/bolivia", "Cafe Imports")),
+  later(source("src-cafeimports-ecuador", "Origins: Ecuador", "https://www.cafeimports.com/europe/ecuador", "Cafe Imports")),
+  later(source("src-cafeimports-yemen", "Origins: Yemen", "https://www.cafeimports.com/europe/yemen", "Cafe Imports")),
+  later(sucafina("src-sucafina-honduras", "Honduras", "honduras")),
+  later(sucafina("src-sucafina-costa-rica", "Costa Rica", "costa-rica")),
+  later(sucafina("src-sucafina-malawi", "Malawi", "malawi")),
+  later(sucafina("src-sucafina-drc", "Democratic Republic of Congo", "democratic-republic-of-congo")),
+  later(sucafina("src-sucafina-timor-leste", "Timor-Leste", "timor-leste")),
+  later(sucafina("src-sucafina-el-salvador", "El Salvador", "el-salvador")),
+  later(sucafina("src-sucafina-nicaragua", "Nicaragua", "nicaragua")),
+  later(sucafina("src-sucafina-panama", "Panama", "panama")),
+  later(sucafina("src-sucafina-jamaica", "Jamaica", "jamaica")),
+  later(sucafina("src-sucafina-peru", "Peru", "peru")),
+  later(sucafina("src-sucafina-rwanda", "Rwanda", "rwanda")),
+  later(sucafina("src-sucafina-uganda", "Uganda", "uganda")),
+  later(sucafina("src-sucafina-tanzania", "Tanzania", "tanzania")),
+  later(sucafina("src-sucafina-india", "India", "india")),
+  later(sucafina("src-sucafina-china", "China", "china")),
+  later(sucafina("src-sucafina-papua-new-guinea", "Papua New Guinea", "papua-new-guinea")),
+  later(wikipedia("src-wikipedia-coffee-dominican-republic", "Coffee_production_in_the_Dominican_Republic", "Coffee production in the Dominican Republic")),
+  later(wikipedia("src-wikipedia-barahona-province", "Barahona_Province", "Barahona Province")),
+  later(wikipedia("src-wikipedia-coffee-cameroon", "Coffee_production_in_Cameroon", "Coffee production in Cameroon")),
+  later(wikipedia("src-wikipedia-coffee-ivory-coast", "Coffee_production_in_Ivory_Coast", "Coffee production in Ivory Coast")),
+  later(wikipedia("src-wikipedia-man-ivory-coast", "Man,_Ivory_Coast", "Man, Ivory Coast")),
+  later(wikipedia("src-wikipedia-coffee-madagascar", "Coffee_production_in_Madagascar", "Coffee production in Madagascar")),
+  later(wikipedia("src-wikipedia-coffee-sri-lanka", "Coffee_production_in_Sri_Lanka", "Coffee production in Sri Lanka")),
+  later(wikipedia("src-wikipedia-chipinge", "Chipinge", "Chipinge")),
+  later(wikipedia("src-wikipedia-kasama", "Kasama,_Zambia", "Kasama, Zambia")),
+  later(wikipedia("src-wikipedia-kpalime", "Kpalimé", "Kpalimé")),
+  later(wikipedia("src-wikipedia-agriculture-guinea", "Agriculture_in_Guinea", "Agriculture in Guinea")),
+  later(wikipedia("src-wikipedia-guinee-forestiere", "Guinée_forestière", "Guinée forestière")),
+  later(wikipedia("src-wikipedia-mzuzu", "Mzuzu", "Mzuzu")),
+  later(wikipedia("src-wikipedia-tenom", "Tenom", "Tenom")),
+  later(wikipedia("src-wikipedia-monsooned-malabar", "Monsooned_Malabar", "Monsooned Malabar")),
+  later(wikipedia("src-wikipedia-wiener-melange", "Wiener_Melange", "Wiener Melange")),
+  later(source("src-coffeereview-dominican-republic", "Coffee origins: Dominican Republic", "https://www.coffeereview.com/coffee-reference/coffee-categories/geographic-origins/coffees-from-the-americas/dominican-republic/", "Coffee Review")),
+  later(source("src-coffeereview-haiti", "Coffee origins: Haiti", "https://www.coffeereview.com/coffee-reference/coffee-categories/geographic-origins/coffees-from-the-americas/haiti/", "Coffee Review")),
+  later(source("src-coffeereview-venezuela", "Coffee origins: Venezuela", "https://www.coffeereview.com/coffee-reference/coffee-categories/geographic-origins/coffees-from-the-americas/venezuela/", "Coffee Review")),
+  later(source("src-coffeereview-zambia", "Coffee origins: Zambia", "https://www.coffeereview.com/coffee-reference/coffee-categories/geographic-origins/coffees-from-africa-and-arabia/zambia/", "Coffee Review")),
+  later(source("src-coffeereview-zimbabwe", "Coffee origins: Zimbabwe", "https://www.coffeereview.com/coffee-reference/coffee-categories/geographic-origins/coffees-from-africa-and-arabia/zimbabwe/", "Coffee Review")),
 ];
 
 export const CATALOG_RECORDS = {
@@ -443,9 +491,8 @@ export const CATALOG_RECORDS = {
       name: "Dominican Republic",
       isoCode: "DO",
       center: { latitude: 18.74, longitude: -70.16 },
-      summary:
-        "Coffee is grown in the highlands of the Dominican Republic, including the Barahona area in the southwest and the Cordillera Central around Jarabacoa.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "Coffee in the Dominican Republic grows mainly in the mountain regions. Arabica is the main variety; robusta, grown on about 1.3% of the coffee land, is consumed locally.",
+      sourceIds: ["src-wikipedia-coffee-dominican-republic"],
     },
     {
       id: "cuba",
@@ -479,81 +526,72 @@ export const CATALOG_RECORDS = {
       name: "Côte d'Ivoire",
       isoCode: "CI",
       center: { latitude: 7.54, longitude: -5.55 },
-      summary:
-        "Côte d'Ivoire grows coffee mainly in its forested west, and most of it is robusta.",
-      sourceIds: ["src-wikipedia-coffea-canephora"],
+      summary: "Côte d'Ivoire grows mostly robusta. It was Africa's largest coffee producer in the 1970s and 1980s.",
+      sourceIds: ["src-wikipedia-coffee-ivory-coast"],
     },
     {
       id: "cameroon",
       name: "Cameroon",
       isoCode: "CM",
       center: { latitude: 7.37, longitude: 12.35 },
-      summary:
-        "Cameroon grows both robusta and arabica coffee, with arabica mainly on the western highlands.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "Cameroon grows coffee in seven regions: robusta, the larger crop, at middle elevations and on the coast, and arabica in the western highlands.",
+      sourceIds: ["src-wikipedia-coffee-cameroon"],
     },
     {
       id: "dr-congo",
       name: "DR Congo",
       isoCode: "CD",
       center: { latitude: -4.04, longitude: 21.76 },
-      summary:
-        "Coffee has been grown in the Democratic Republic of the Congo since the colonial period, with arabica in the eastern highlands and robusta elsewhere.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "Coffee in the Democratic Republic of the Congo grows from the hills of Province Orientale to the volcanic soils by Lake Kivu. The country's colonial history and political turmoil have held the sector back.",
+      sourceIds: ["src-sucafina-drc"],
     },
     {
       id: "malawi",
       name: "Malawi",
       isoCode: "MW",
       center: { latitude: -13.25, longitude: 34.3 },
-      summary:
-        "Coffee is grown in the northern highlands of Malawi, and it is a small export crop.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "Coffee never became the mainstay in Malawi that it is in Tanzania and Kenya. Estates such as Sable Farms export washed arabica, and 3,000 to 4,000 smallholders grow about a third of the crop.",
+      sourceIds: ["src-sucafina-malawi"],
     },
     {
       id: "zambia",
       name: "Zambia",
       isoCode: "ZM",
       center: { latitude: -13.13, longitude: 27.85 },
-      summary:
-        "Coffee is grown in Zambia in the north, around Kasama, and in the Lusaka area.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "Zambia grows coffee in its north, including on the Kateshi Estates near Kasama.",
+      sourceIds: ["src-wikipedia-kasama"],
     },
     {
       id: "zimbabwe",
       name: "Zimbabwe",
       isoCode: "ZW",
       center: { latitude: -19.02, longitude: 29.15 },
-      summary:
-        "Coffee is grown in the Eastern Highlands of Zimbabwe, along the border with Mozambique.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "Zimbabwe grows coffee in the southeast around Chipinge, near the border with Mozambique.",
+      sourceIds: ["src-wikipedia-chipinge"],
     },
     {
       id: "madagascar",
       name: "Madagascar",
       isoCode: "MG",
       center: { latitude: -18.77, longitude: 46.87 },
-      summary:
-        "Madagascar grows coffee mostly along its humid east coast, and most of it is robusta.",
-      sourceIds: ["src-wikipedia-coffea-canephora"],
+      summary: "Coffee came to Madagascar from Réunion. The island was Africa's main coffee exporter in 1930 and today grows mainly robusta.",
+      sourceIds: ["src-wikipedia-coffee-madagascar"],
     },
     {
       id: "togo",
       name: "Togo",
       isoCode: "TG",
       center: { latitude: 8.62, longitude: 0.82 },
-      summary:
-        "Togo grows coffee in its southwestern hills, and most of it is robusta.",
-      sourceIds: ["src-wikipedia-coffea-canephora"],
+      summary: "Togo grows coffee in its Plateaux Region, where coffee and cocoa plantations surround the city of Kpalimé.",
+      sourceIds: ["src-wikipedia-kpalime"],
     },
     {
       id: "guinea",
       name: "Guinea",
       isoCode: "GN",
       center: { latitude: 9.95, longitude: -9.7 },
-      summary:
-        "Guinea grows coffee in the southeast of the country, mostly robusta.",
-      sourceIds: ["src-wikipedia-coffea-canephora"],
+      summary: "Coffee is one of Guinea's cash crops. Production has fluctuated, partly because of smuggling before the country's reforms in the early 1980s.",
+      sourceIds: ["src-wikipedia-agriculture-guinea"],
     },
     {
       id: "myanmar",
@@ -570,7 +608,7 @@ export const CATALOG_RECORDS = {
       center: { latitude: 7.87, longitude: 80.77 },
       summary:
         "Coffee was once Sri Lanka's main plantation crop until leaf rust destroyed it in the 19th century. Today a smaller amount is grown in the central highlands.",
-      sourceIds: ["src-wikipedia-coffee-leaf-rust"],
+      sourceIds: ["src-wikipedia-coffee-leaf-rust", "src-wikipedia-coffee-sri-lanka"],
     },
     {
       id: "nepal",
@@ -585,18 +623,16 @@ export const CATALOG_RECORDS = {
       name: "Timor-Leste",
       isoCode: "TL",
       center: { latitude: -8.87, longitude: 125.73 },
-      summary:
-        "Coffee is Timor-Leste's most important agricultural export and is grown mainly by smallholders in the highlands.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "Coffee accounts for about 80% of Timor-Leste's export revenue, and Ermera is known for the country's highest-quality coffees.",
+      sourceIds: ["src-sucafina-timor-leste"],
     },
     {
       id: "malaysia",
       name: "Malaysia",
       isoCode: "MY",
       center: { latitude: 4.21, longitude: 101.98 },
-      summary:
-        "Malaysia grows liberica and robusta coffee, and coffee is a part of daily life in its local coffee shops.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "Malaysia grows robusta in the Tenom district of Sabah, and has coffee drinks of its own such as Ipoh white coffee.",
+      sourceIds: ["src-wikipedia-tenom", "src-wikipedia-white-coffee"],
     },
     {
       id: "japan",
@@ -1028,9 +1064,8 @@ export const CATALOG_RECORDS = {
       countryId: "dominican-republic",
       name: "Barahona",
       center: { latitude: 18.2, longitude: -71.1 },
-      summary:
-        "A mountainous province in the southwest of the Dominican Republic, known for its coffee.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "A province on the Caribbean coast of the Dominican Republic, where coffee is grown in the hills.",
+      sourceIds: ["src-wikipedia-barahona-province"],
     },
     {
       id: "cuba-sierra-maestra",
@@ -1064,81 +1099,64 @@ export const CATALOG_RECORDS = {
       countryId: "cote-d-ivoire",
       name: "Man Region",
       center: { latitude: 7.4, longitude: -7.55 },
-      summary:
-        "A mountainous area in the west of Côte d'Ivoire, where coffee is among the farmed crops.",
-      sourceIds: ["src-wikipedia-coffea-canephora"],
+      summary: "An agricultural area in the west of Côte d'Ivoire and the country's largest coffee producer.",
+      sourceIds: ["src-wikipedia-man-ivory-coast"],
     },
     {
       id: "cameroon-west-highlands",
       countryId: "cameroon",
       name: "West Highlands",
       center: { latitude: 5.7, longitude: 10.4 },
-      summary:
-        "The western highlands of Cameroon, where arabica coffee is grown at higher elevations.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "The western highlands of Cameroon, whose Bamileke and Bamoun high plateaus hold the country's arabica plantations.",
+      sourceIds: ["src-wikipedia-coffee-cameroon"],
     },
     {
       id: "dr-congo-kivu",
       countryId: "dr-congo",
       name: "Kivu",
       center: { latitude: -2.0, longitude: 28.8 },
-      summary:
-        "The mountainous Lake Kivu area in eastern DR Congo, where arabica coffee is grown.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "The volcanic shores of Lake Kivu in eastern DR Congo; North and South Kivu are key coffee regions.",
+      sourceIds: ["src-sucafina-drc"],
     },
     {
       id: "malawi-mzuzu",
       countryId: "malawi",
       name: "Mzuzu",
       center: { latitude: -11.46, longitude: 34.02 },
-      summary:
-        "The main city of northern Malawi, around which much of the country's arabica coffee is grown.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "The capital of Malawi's Northern Region, in a gap in the Viphya Mountains; the farmland around it grows tea, rubber and coffee.",
+      sourceIds: ["src-wikipedia-mzuzu"],
     },
     {
       id: "zambia-northern-province",
       countryId: "zambia",
       name: "Northern Province",
       center: { latitude: -10.2, longitude: 31.18 },
-      summary:
-        "A highland province in northern Zambia centered on Kasama, where arabica coffee is grown.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "A province in northern Zambia; near its town of Kasama, coffee is grown on the Kateshi Estates.",
+      sourceIds: ["src-wikipedia-kasama"],
     },
     {
       id: "zimbabwe-chipinge",
       countryId: "zimbabwe",
       name: "Chipinge",
       center: { latitude: -20.19, longitude: 32.62 },
-      summary:
-        "A highland district in the east of Zimbabwe, where coffee is grown.",
-      sourceIds: ["src-wikipedia-coffee"],
-    },
-    {
-      id: "madagascar-sava",
-      countryId: "madagascar",
-      name: "Sava",
-      center: { latitude: -14.3, longitude: 49.9 },
-      summary:
-        "A region in the northeast of Madagascar, where coffee is among the crops grown.",
-      sourceIds: ["src-wikipedia-coffea-canephora"],
+      summary: "A district in Manicaland Province in southeastern Zimbabwe, near the border with Mozambique, where farmers grow coffee alongside tea and macadamia nuts.",
+      sourceIds: ["src-wikipedia-chipinge"],
     },
     {
       id: "togo-plateaux",
       countryId: "togo",
       name: "Plateaux Region",
       center: { latitude: 6.95, longitude: 0.6 },
-      summary:
-        "A hilly region in southwestern Togo around Kloto, where coffee is grown.",
-      sourceIds: ["src-wikipedia-coffea-canephora"],
+      summary: "A region of Togo; around Kpalimé, the capital of Kloto Prefecture, the countryside holds coffee and cocoa plantations.",
+      sourceIds: ["src-wikipedia-kpalime"],
     },
     {
       id: "guinea-guinee-forestiere",
       countryId: "guinea",
       name: "Guinée Forestière",
       center: { latitude: 7.75, longitude: -8.82 },
-      summary:
-        "The forested southeast of Guinea around Nzérékoré, where coffee is grown.",
-      sourceIds: ["src-wikipedia-coffea-canephora"],
+      summary: "The forested southeast of Guinea, where farmers mainly grow rice, coffee and kola.",
+      sourceIds: ["src-wikipedia-guinee-forestiere"],
     },
     {
       id: "myanmar-ywangan",
@@ -1155,7 +1173,7 @@ export const CATALOG_RECORDS = {
       center: { latitude: 7.29, longitude: 80.63 },
       summary:
         "The hill country around Kandy, where coffee was first grown on plantations on the island.",
-      sourceIds: ["src-wikipedia-coffee-leaf-rust"],
+      sourceIds: ["src-wikipedia-coffee-leaf-rust", "src-wikipedia-coffee-sri-lanka"],
     },
     {
       id: "nepal-gulmi",
@@ -1170,18 +1188,16 @@ export const CATALOG_RECORDS = {
       countryId: "timor-leste",
       name: "Ermera",
       center: { latitude: -8.75, longitude: 125.4 },
-      summary:
-        "A highland district southwest of Dili and the main coffee-growing area of Timor-Leste.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "The municipality known for Timor-Leste's highest-quality coffees; its Letefoho subregion grows coffee at 1,300 to 1,900 meters.",
+      sourceIds: ["src-sucafina-timor-leste"],
     },
     {
       id: "malaysia-sabah",
       countryId: "malaysia",
       name: "Sabah",
       center: { latitude: 5.12, longitude: 115.95 },
-      summary:
-        "A state on the island of Borneo whose Tenom district is known for its coffee.",
-      sourceIds: ["src-wikipedia-coffee"],
+      summary: "A state on the island of Borneo whose Tenom district grows the robusta used for Tenom coffee.",
+      sourceIds: ["src-wikipedia-tenom"],
     },
   ],
   beans: [
@@ -1257,7 +1273,7 @@ export const CATALOG_RECORDS = {
         "A Kenyan size grade rather than a place: AA is the largest screen size (17/18). It is recorded at country level because lots come from many areas.",
       origin: { countryId: "kenya", regionId: null },
       flavorNotes: ["black currant", "grapefruit"],
-      varieties: [],
+      varieties: ["SL28", "SL34", "Ruiru 11", "Batian"],
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: "Kenyan coffee grows at altitudes from about 1,400 to more than 2,000 meters.",
@@ -1394,7 +1410,7 @@ export const CATALOG_RECORDS = {
       roastDescription: null,
       growingConditions:
         "Grown on terraces on semi-arid mountain slopes; in the dry winter, water from small reservoirs is directed to the trees' roots.",
-      sourceIds: ["src-coffeereview-yemen", "src-coffeereview-haraaz", "src-wikipedia-haraz-mountains"],
+      sourceIds: ["src-coffeereview-yemen", "src-coffeereview-haraaz", "src-wikipedia-haraz-mountains", "src-cafeimports-yemen"],
     },
     {
       id: "bean-marcala-washed",
@@ -1406,7 +1422,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: null,
-      sourceIds: ["src-wikipedia-coffee-honduras"],
+      sourceIds: ["src-wikipedia-coffee-honduras", "src-cafeimports-honduras"],
     },
     {
       id: "bean-chiapas-washed",
@@ -1430,7 +1446,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: "Grown in mountain areas at high elevation.",
-      sourceIds: ["src-wikipedia-coffee-costa-rica"],
+      sourceIds: ["src-wikipedia-coffee-costa-rica", "src-sucafina-costa-rica"],
     },
     {
       id: "bean-apaneca-washed",
@@ -1442,7 +1458,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: "Grown on volcanic slopes.",
-      sourceIds: ["src-wikipedia-coffee-el-salvador"],
+      sourceIds: ["src-wikipedia-coffee-el-salvador", "src-sucafina-el-salvador", "src-cafeimports-el-salvador"],
     },
     {
       id: "bean-jinotega-washed",
@@ -1454,7 +1470,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: null,
-      sourceIds: ["src-wikipedia-coffee-nicaragua"],
+      sourceIds: ["src-wikipedia-coffee-nicaragua", "src-sucafina-nicaragua"],
     },
     {
       id: "bean-boquete-washed",
@@ -1466,7 +1482,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: "Grown in the highlands of Chiriquí province.",
-      sourceIds: ["src-wikipedia-coffee-panama"],
+      sourceIds: ["src-wikipedia-coffee-panama", "src-sucafina-panama"],
     },
     {
       id: "bean-blue-mountain-washed",
@@ -1478,7 +1494,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: "Grown at high elevation in the Blue Mountains.",
-      sourceIds: ["src-wikipedia-coffee-jamaica"],
+      sourceIds: ["src-wikipedia-coffee-jamaica", "src-sucafina-jamaica"],
     },
     {
       id: "bean-cajamarca-washed",
@@ -1490,7 +1506,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: null,
-      sourceIds: ["src-wikipedia-coffee-peru"],
+      sourceIds: ["src-wikipedia-coffee-peru", "src-sucafina-peru", "src-cafeimports-peru"],
     },
     {
       id: "bean-yungas-washed",
@@ -1502,7 +1518,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: "Grown on steep, forested Andean slopes.",
-      sourceIds: ["src-wikipedia-coffee-bolivia"],
+      sourceIds: ["src-wikipedia-coffee-bolivia", "src-cafeimports-bolivia"],
     },
     {
       id: "bean-ecuador-arabica",
@@ -1515,7 +1531,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: null,
-      sourceIds: ["src-wikipedia-coffee-ecuador"],
+      sourceIds: ["src-wikipedia-coffee-ecuador", "src-cafeimports-ecuador"],
     },
     {
       id: "bean-nyamasheke-washed",
@@ -1527,7 +1543,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: "Grown on hillsides by smallholders and processed at washing stations.",
-      sourceIds: ["src-wikipedia-coffee-rwanda"],
+      sourceIds: ["src-wikipedia-coffee-rwanda", "src-sucafina-rwanda"],
     },
     {
       id: "bean-kayanza-washed",
@@ -1551,7 +1567,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: "Grown on the slopes of Mount Elgon.",
-      sourceIds: ["src-wikipedia-coffee-uganda", "src-wikipedia-mount-elgon"],
+      sourceIds: ["src-wikipedia-coffee-uganda", "src-wikipedia-mount-elgon", "src-sucafina-uganda"],
     },
     {
       id: "bean-kilimanjaro-washed",
@@ -1563,7 +1579,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: "Grown on the slopes of Mount Kilimanjaro.",
-      sourceIds: ["src-wikipedia-coffee-tanzania", "src-wikipedia-kilimanjaro"],
+      sourceIds: ["src-wikipedia-coffee-tanzania", "src-wikipedia-kilimanjaro", "src-sucafina-tanzania"],
     },
     {
       id: "bean-chikmagalur-arabica",
@@ -1575,7 +1591,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed", "natural"],
       roastDescription: null,
       growingConditions: "Grown under shade trees in the hills of southern India.",
-      sourceIds: ["src-wikipedia-coffee-india"],
+      sourceIds: ["src-wikipedia-coffee-india", "src-sucafina-india"],
     },
     {
       id: "bean-yunnan-arabica",
@@ -1587,7 +1603,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: null,
-      sourceIds: ["src-wikipedia-coffee-china"],
+      sourceIds: ["src-wikipedia-coffee-china", "src-sucafina-china"],
     },
     {
       id: "bean-chiang-rai-arabica",
@@ -1623,7 +1639,7 @@ export const CATALOG_RECORDS = {
       processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: "Grown by smallholders in highland gardens.",
-      sourceIds: ["src-wikipedia-coffee-papua-new-guinea"],
+      sourceIds: ["src-wikipedia-coffee-papua-new-guinea", "src-sucafina-papua-new-guinea"],
     },
     {
       id: "bean-batangas-barako",
@@ -1641,15 +1657,14 @@ export const CATALOG_RECORDS = {
     {
       id: "bean-barahona-arabica",
       name: "Barahona Arabica",
-      description:
-        "Arabica coffee from the highlands around Barahona in the southwest of the Dominican Republic.",
+      description: "Arabica coffee from the hills of Barahona Province, on the Dominican Republic's Caribbean coast.",
       origin: { countryId: "dominican-republic", regionId: "dominican-republic-barahona" },
-      flavorNotes: [],
-      varieties: [],
+      flavorNotes: ["full-bodied", "lively acidity"],
+      varieties: ["Typica"],
       processingMethods: [],
       roastDescription: null,
-      growingConditions: "Grown in the mountains of the Barahona area.",
-      sourceIds: ["src-wikipedia-coffee"],
+      growingConditions: "Grown in the hilly parts of the province.",
+      sourceIds: ["src-wikipedia-barahona-province", "src-wikipedia-coffee-dominican-republic", "src-coffeereview-dominican-republic"],
     },
     {
       id: "bean-sierra-maestra-arabica",
@@ -1661,7 +1676,7 @@ export const CATALOG_RECORDS = {
       varieties: [],
       processingMethods: [],
       roastDescription: null,
-      growingConditions: "Grown on the slopes of the Sierra Maestra.",
+      growingConditions: "Grown in the Sierra Maestra, where 92% of Cuba's coffee comes from, often under forest canopy and mostly on small family farms.",
       sourceIds: ["src-wikipedia-coffee-cuba"],
     },
     {
@@ -1670,12 +1685,12 @@ export const CATALOG_RECORDS = {
       description:
         "Arabica coffee grown on smallholder farms in the northern highlands of Haiti.",
       origin: { countryId: "haiti", regionId: "haiti-north" },
-      flavorNotes: [],
-      varieties: [],
-      processingMethods: [],
+      flavorNotes: ["chocolate", "cocoa", "sweet"],
+      varieties: ["Typica"],
+      processingMethods: ["natural"],
       roastDescription: null,
       growingConditions: "Grown in the mountains of northern Haiti.",
-      sourceIds: ["src-wikipedia-coffee-haiti"],
+      sourceIds: ["src-wikipedia-coffee-haiti", "src-coffeereview-haiti"],
     },
     {
       id: "bean-venezuelan-andes-arabica",
@@ -1683,25 +1698,24 @@ export const CATALOG_RECORDS = {
       description:
         "Arabica coffee from the Andean highlands of western Venezuela.",
       origin: { countryId: "venezuela", regionId: "venezuela-andes" },
-      flavorNotes: [],
+      flavorNotes: ["sweet", "fruity"],
       varieties: [],
-      processingMethods: [],
+      processingMethods: ["washed"],
       roastDescription: null,
-      growingConditions: "Grown in the Andean mountain states.",
-      sourceIds: ["src-wikipedia-coffee-venezuela"],
+      growingConditions: "Grown in a shaded, multilayered system in the premontane moist forest of the Andean states of Táchira, Mérida and Trujillo.",
+      sourceIds: ["src-wikipedia-coffee-venezuela", "src-coffeereview-venezuela"],
     },
     {
       id: "bean-ivorian-robusta",
       name: "Ivorian Robusta",
-      description:
-        "Robusta coffee grown in Côte d'Ivoire, mostly by smallholders.",
+      description: "Robusta coffee from Côte d'Ivoire, once Africa's largest coffee producer.",
       origin: { countryId: "cote-d-ivoire", regionId: null },
       flavorNotes: [],
       varieties: [],
       processingMethods: [],
       roastDescription: null,
       growingConditions: null,
-      sourceIds: ["src-wikipedia-coffea-canephora"],
+      sourceIds: ["src-wikipedia-coffee-ivory-coast"],
     },
     {
       id: "bean-western-highlands-arabica",
@@ -1710,11 +1724,11 @@ export const CATALOG_RECORDS = {
         "Arabica coffee grown in the western highlands of Cameroon.",
       origin: { countryId: "cameroon", regionId: "cameroon-west-highlands" },
       flavorNotes: [],
-      varieties: [],
+      varieties: ["Java", "Jamaïca"],
       processingMethods: [],
       roastDescription: null,
-      growingConditions: "Grown at higher elevations in the West and Northwest regions.",
-      sourceIds: ["src-wikipedia-coffee"],
+      growingConditions: "Grown on the Bamileke and Bamoun high plateaus.",
+      sourceIds: ["src-wikipedia-coffee-cameroon"],
     },
     {
       id: "bean-kivu-arabica",
@@ -1723,11 +1737,11 @@ export const CATALOG_RECORDS = {
         "Arabica coffee from the highlands around Lake Kivu in eastern DR Congo.",
       origin: { countryId: "dr-congo", regionId: "dr-congo-kivu" },
       flavorNotes: [],
-      varieties: [],
+      varieties: ["Bourbon"],
       processingMethods: [],
       roastDescription: null,
-      growingConditions: "Grown in the hills around Lake Kivu.",
-      sourceIds: ["src-wikipedia-coffee"],
+      growingConditions: "Grown in volcanic soil on the shores of Lake Kivu.",
+      sourceIds: ["src-sucafina-drc"],
     },
     {
       id: "bean-mzuzu-arabica",
@@ -1737,75 +1751,70 @@ export const CATALOG_RECORDS = {
       origin: { countryId: "malawi", regionId: "malawi-mzuzu" },
       flavorNotes: [],
       varieties: [],
-      processingMethods: [],
+      processingMethods: ["washed"],
       roastDescription: null,
       growingConditions: "Grown in the northern highlands.",
-      sourceIds: ["src-wikipedia-coffee"],
+      sourceIds: ["src-wikipedia-mzuzu", "src-sucafina-malawi", "src-cafeimports-malawi"],
     },
     {
       id: "bean-northern-province-arabica",
-      name: "Northern Province Arabica",
-      description:
-        "Arabica coffee grown in the Kasama area of northern Zambia.",
+      name: "Kasama Estate Coffee",
+      description: "Coffee grown on the Kateshi Estates near Kasama in Zambia's Northern Province.",
       origin: { countryId: "zambia", regionId: "zambia-northern-province" },
       flavorNotes: [],
-      varieties: [],
-      processingMethods: [],
+      varieties: ["Bourbon", "Catimor"],
+      processingMethods: ["washed"],
       roastDescription: null,
-      growingConditions: "Grown on the highland plateau of the Northern Province.",
-      sourceIds: ["src-wikipedia-coffee"],
+      growingConditions: null,
+      sourceIds: ["src-wikipedia-kasama", "src-coffeereview-zambia"],
     },
     {
       id: "bean-chipinge-arabica",
-      name: "Chipinge Arabica",
-      description:
-        "Arabica coffee grown in the Chipinge area of Zimbabwe's Eastern Highlands.",
+      name: "Chipinge Coffee",
+      description: "Coffee from the farms around Chipinge in southeastern Zimbabwe, where coffee took hold after an experimental station opened in 1950.",
       origin: { countryId: "zimbabwe", regionId: "zimbabwe-chipinge" },
-      flavorNotes: [],
-      varieties: [],
-      processingMethods: [],
+      flavorNotes: ["savory-sweet fruit", "balanced"],
+      varieties: ["SL28"],
+      processingMethods: ["washed"],
       roastDescription: null,
-      growingConditions: "Grown in the Eastern Highlands.",
-      sourceIds: ["src-wikipedia-coffee"],
+      growingConditions: null,
+      sourceIds: ["src-wikipedia-chipinge", "src-coffeereview-zimbabwe"],
     },
     {
       id: "bean-madagascar-robusta",
       name: "Madagascar Robusta",
-      description:
-        "Robusta coffee grown in Madagascar, mostly along the east coast.",
+      description: "Robusta coffee from Madagascar, the island's main coffee.",
       origin: { countryId: "madagascar", regionId: null },
       flavorNotes: [],
       varieties: [],
       processingMethods: [],
       roastDescription: null,
       growingConditions: null,
-      sourceIds: ["src-wikipedia-coffea-canephora"],
+      sourceIds: ["src-wikipedia-coffee-madagascar"],
     },
     {
       id: "bean-plateaux-coffee",
       name: "Plateaux Coffee",
-      description:
-        "Coffee grown in the hills of the Plateaux Region around Kloto in southwestern Togo.",
+      description: "Coffee from the plantations around Kpalimé, the capital of Kloto Prefecture in Togo's Plateaux Region.",
       origin: { countryId: "togo", regionId: "togo-plateaux" },
       flavorNotes: [],
       varieties: [],
       processingMethods: [],
       roastDescription: null,
-      growingConditions: "Grown in the hills of the Kloto area.",
-      sourceIds: ["src-wikipedia-coffea-canephora"],
+      growingConditions: "Grown in the countryside around Kpalimé, alongside cocoa.",
+      sourceIds: ["src-wikipedia-kpalime"],
     },
     {
       id: "bean-forest-guinea-robusta",
-      name: "Forest Guinea Robusta",
-      description:
-        "Robusta coffee from the Guinée Forestière region in southeastern Guinea.",
+      name: "Forest Guinea Coffee",
+      description: "Coffee from Guinée forestière, where it is one of the main crops alongside rice and kola.",
       origin: { countryId: "guinea", regionId: "guinea-guinee-forestiere" },
       flavorNotes: [],
       varieties: [],
       processingMethods: [],
       roastDescription: null,
-      growingConditions: "Grown in the forest zone of the southeast.",
-      sourceIds: ["src-wikipedia-coffea-canephora"],
+      growingConditions: null,
+      sourceIds: ["src-wikipedia-guinee-forestiere", "src-wikipedia-agriculture-guinea"],
     },
     {
       id: "bean-ywangan-arabica",
@@ -1829,8 +1838,8 @@ export const CATALOG_RECORDS = {
       varieties: [],
       processingMethods: [],
       roastDescription: null,
-      growingConditions: "Grown in the central highlands.",
-      sourceIds: ["src-wikipedia-coffee-leaf-rust"],
+      growingConditions: "Arabica grows particularly well in Sri Lanka's wetland and hill country.",
+      sourceIds: ["src-wikipedia-coffee-sri-lanka"],
     },
     {
       id: "bean-gulmi-arabica",
@@ -1847,28 +1856,110 @@ export const CATALOG_RECORDS = {
     {
       id: "bean-ermera-arabica",
       name: "Ermera Arabica",
-      description:
-        "Arabica coffee grown by smallholders in the highlands of Ermera, Timor-Leste.",
+      description: "Arabica coffee from Ermera, the municipality known for Timor-Leste's highest-quality coffees.",
       origin: { countryId: "timor-leste", regionId: "timor-leste-ermera" },
       flavorNotes: [],
       varieties: [],
       processingMethods: [],
       roastDescription: null,
-      growingConditions: "Grown in the highlands, often under shade trees.",
-      sourceIds: ["src-wikipedia-coffee"],
+      growingConditions: "Grown at 1,300 to 1,900 meters in Letefoho, the highest part of Ermera.",
+      sourceIds: ["src-sucafina-timor-leste"],
     },
     {
       id: "bean-tenom-coffee",
       name: "Tenom Coffee",
-      description:
-        "Coffee grown in the Tenom district of Sabah, Malaysia.",
+      description: "Robusta coffee from the Tenom district of Sabah, used for Tenom coffee, a popular local kopi.",
       origin: { countryId: "malaysia", regionId: "malaysia-sabah" },
       flavorNotes: [],
       varieties: [],
       processingMethods: [],
       roastDescription: null,
-      growingConditions: "Grown in the interior of Sabah.",
-      sourceIds: ["src-wikipedia-coffee"],
+      growingConditions: null,
+      sourceIds: ["src-wikipedia-tenom"],
+    },
+    {
+      id: "bean-colombia-coffee-belt-washed",
+      name: "Coffee Belt Washed",
+      description: "Washed coffee from Colombia's central coffee belt (Antioquia, Caldas, Quindío and nearby departments), where most of the country's coffee is grown: easy-drinking, balanced and low in acidity.",
+      origin: {"countryId": "colombia", "regionId": null},
+      flavorNotes: ["nutty", "sweet", "fruity", "herbal"],
+      varieties: [],
+      processingMethods: ["washed"],
+      roastDescription: null,
+      growingConditions: null,
+      sourceIds: ["src-cafeimports-colombia", "src-sucafina-colombia"],
+    },
+    {
+      id: "bean-tres-rios-washed",
+      name: "Tres Ríos",
+      description: "Coffee from Tres Ríos, a Costa Rican region known for a smooth, milder, easy-drinking profile.",
+      origin: {"countryId": "costa-rica", "regionId": null},
+      flavorNotes: ["toffee", "soft citrus"],
+      varieties: [],
+      processingMethods: [],
+      roastDescription: null,
+      growingConditions: null,
+      sourceIds: ["src-cafeimports-costa-rica", "src-sucafina-costa-rica"],
+    },
+    {
+      id: "bean-copan-washed",
+      name: "Copán Washed",
+      description: "Washed coffee from Copán, one of Honduras's key coffee regions, in the country's mild style: nutty, sweet and heavy-bodied, with modest acidity.",
+      origin: {"countryId": "honduras", "regionId": null},
+      flavorNotes: ["nutty", "sweet"],
+      varieties: [],
+      processingMethods: ["washed"],
+      roastDescription: null,
+      growingConditions: null,
+      sourceIds: ["src-cafeimports-honduras", "src-sucafina-honduras"],
+    },
+    {
+      id: "bean-mexico-high-grown-washed",
+      name: "Mexican High-Grown Washed",
+      description: "High-grown washed Mexican coffee: a clean cup with citric and malic acidity and chocolate and toffee sweetness.",
+      origin: {"countryId": "mexico", "regionId": null},
+      flavorNotes: ["chocolate", "toffee", "citrus"],
+      varieties: [],
+      processingMethods: ["washed"],
+      roastDescription: null,
+      growingConditions: null,
+      sourceIds: ["src-cafeimports-mexico"],
+    },
+    {
+      id: "bean-lam-dong-arabica",
+      name: "Lâm Đồng Arabica",
+      description: "Arabica from Lâm Đồng province in Vietnam's Central Highlands, a small part of a crop that is about 95% robusta.",
+      origin: {"countryId": "vietnam", "regionId": "vietnam-central-highlands"},
+      flavorNotes: [],
+      varieties: ["Catimor", "Typica", "Bourbon"],
+      processingMethods: [],
+      roastDescription: null,
+      growingConditions: null,
+      sourceIds: ["src-sucafina-vietnam"],
+    },
+    {
+      id: "bean-uganda-robusta",
+      name: "Ugandan Robusta",
+      description: "Robusta from Uganda, one of the few countries where coffee is indigenous: robusta grows wild around Lake Victoria, and most of the planted robusta is in south-eastern Uganda.",
+      origin: {"countryId": "uganda", "regionId": null},
+      flavorNotes: [],
+      varieties: [],
+      processingMethods: [],
+      roastDescription: null,
+      growingConditions: null,
+      sourceIds: ["src-wikipedia-coffee-uganda"],
+    },
+    {
+      id: "bean-monsooned-malabar",
+      name: "Monsooned Malabar",
+      description: "Indian coffee exposed to monsoon rain and winds for three to four months, which swells the beans and removes most of their acidity. The brew is heavy-bodied and pungent.",
+      origin: {"countryId": "india", "regionId": null},
+      flavorNotes: ["chocolate", "spice", "nuts", "earthy"],
+      varieties: [],
+      processingMethods: ["monsooned"],
+      roastDescription: null,
+      growingConditions: null,
+      sourceIds: ["src-wikipedia-monsooned-malabar", "src-cafeimports-india"],
     },
   ],
   drinks: [
@@ -1878,7 +1969,7 @@ export const CATALOG_RECORDS = {
       description:
         "A social coffee ritual: green beans are roasted over an open flame, ground and brewed in a clay jebena, then served in several rounds.",
       associatedLocations: [{ countryId: "ethiopia", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["roasted aroma"],
       ingredients: ["green coffee beans", "water", "sugar"],
       preparation:
         "Green beans are roasted in a pan over an open flame, ground, and brewed in a jebena, a traditional clay pot of boiling water. Incense may be burned.",
@@ -1905,7 +1996,7 @@ export const CATALOG_RECORDS = {
       name: "Cà phê trứng (egg coffee)",
       description: "Robusta coffee brewed in a phin and topped with egg yolk beaten with sugar and condensed milk.",
       associatedLocations: [{ countryId: "vietnam", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["sweet", "creamy"],
       ingredients: ["egg yolks", "sugar", "condensed milk", "robusta coffee"],
       preparation:
         "Coffee is brewed in a phin. Egg yolks are beaten with sugar and condensed milk and warmed gently in a water bath so they do not curdle.",
@@ -1945,7 +2036,7 @@ export const CATALOG_RECORDS = {
       name: "Turkish coffee",
       description: "Very finely ground coffee brewed unfiltered in a cezve and served with its foam in small cups.",
       associatedLocations: [{ countryId: "turkiye", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["foamy", "fine-grained"],
       ingredients: ["finely ground coffee", "cold water", "sugar"],
       preparation:
         "Ground coffee, cold water and sugar to taste are brewed slowly in a cezve until foam forms. It is served with a glass of water.",
@@ -1959,7 +2050,7 @@ export const CATALOG_RECORDS = {
       description:
         "A concentrated coffee made by forcing hot water under high pressure through finely ground coffee, topped with a dense foam called crema.",
       associatedLocations: [{ countryId: "italy", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["concentrated", "crema"],
       ingredients: ["finely ground coffee", "water"],
       preparation: "Hot water is forced under high pressure through finely ground coffee. Any bean or roast level can be used.",
       culturalContext:
@@ -1984,7 +2075,7 @@ export const CATALOG_RECORDS = {
         "Indonesian-style coffee in which hot water is poured over fine grounds directly in the glass, and the grounds are left to settle.",
       // Tied to a specific region: popular in Yogyakarta and Central Java.
       associatedLocations: [{ countryId: "indonesia", regionId: "indonesia-java" }],
-      flavorNotes: [],
+      flavorNotes: ["sweet", "unfiltered"],
       ingredients: ["finely ground coffee", "water", "sugar"],
       preparation: "Boiled water is poured over finely ground coffee in the glass, usually with sugar; it is not filtered.",
       culturalContext:
@@ -2047,7 +2138,7 @@ export const CATALOG_RECORDS = {
       description:
         "A ready-to-drink coffee sold in sealed cans, widely available from vending machines in Japan.",
       associatedLocations: [{ countryId: "japan", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["sweet", "milky"],
       ingredients: ["coffee", "water", "sugar", "milk"],
       preparation:
         "Brewed coffee is sweetened, often with milk, then sealed and heat-treated in cans, and sold hot or cold.",
@@ -2061,7 +2152,7 @@ export const CATALOG_RECORDS = {
       description:
         "A whipped coffee drink: instant coffee, sugar and hot water are whipped into a foam and spooned over milk.",
       associatedLocations: [{ countryId: "south-korea", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["sweet", "toffee-like", "creamy"],
       ingredients: ["instant coffee", "sugar", "hot water", "milk"],
       preparation:
         "Equal parts instant coffee, sugar and hot water are whipped until thick, then served over cold or hot milk.",
@@ -2075,7 +2166,7 @@ export const CATALOG_RECORDS = {
       description:
         "Coffee with hot milk, usually served at breakfast in France.",
       associatedLocations: [{ countryId: "france", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["strong coffee", "milky"],
       ingredients: ["coffee", "hot milk"],
       preparation:
         "Strong brewed coffee is mixed with an approximately equal amount of scalded milk.",
@@ -2089,13 +2180,13 @@ export const CATALOG_RECORDS = {
       description:
         "A Viennese coffee drink made with espresso and steamed milk, topped with milk foam.",
       associatedLocations: [{ countryId: "austria", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["mild", "milky", "foamy"],
       ingredients: ["espresso", "steamed milk", "milk foam"],
       preparation:
         "Espresso is combined with steamed milk and topped with milk foam.",
       culturalContext:
         "A staple of the Viennese coffee house, where it is served on a small tray with a glass of water.",
-      sourceIds: ["src-wikipedia-viennese-coffee-house"],
+      sourceIds: ["src-wikipedia-viennese-coffee-house", "src-wikipedia-wiener-melange"],
     },
     {
       id: "drink-cafe-con-leche",
@@ -2103,7 +2194,7 @@ export const CATALOG_RECORDS = {
       description:
         "Espresso coffee mixed with hot milk, a common breakfast drink in Spain.",
       associatedLocations: [{ countryId: "spain", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["strong coffee", "milky"],
       ingredients: ["espresso", "hot milk"],
       preparation:
         "Strong coffee is combined with hot milk, in roughly equal parts.",
@@ -2117,7 +2208,7 @@ export const CATALOG_RECORDS = {
       description:
         "A Portuguese milk coffee made from espresso and foamed milk, served in a tall glass.",
       associatedLocations: [{ countryId: "portugal", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["milky", "foamy"],
       ingredients: ["espresso", "foamed milk"],
       preparation:
         "A shot of coffee is topped with a large amount of foamed milk in a tall glass.",
@@ -2131,7 +2222,7 @@ export const CATALOG_RECORDS = {
       description:
         "A Greek iced coffee made by shaking instant coffee, water and sugar into a foam, then pouring it over ice.",
       associatedLocations: [{ countryId: "greece", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["iced", "foamy", "sweet"],
       ingredients: ["instant coffee", "water", "sugar", "ice", "milk"],
       preparation:
         "Instant coffee, water and sugar are shaken or whisked to a foam, poured over ice, and milk may be added.",
@@ -2145,7 +2236,7 @@ export const CATALOG_RECORDS = {
       description:
         "A North Frisian coffee drink made of black coffee with rum, topped with whipped cream.",
       associatedLocations: [{ countryId: "germany", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["rum", "whipped cream"],
       ingredients: ["coffee", "rum", "sugar", "whipped cream"],
       preparation:
         "Coffee is sweetened and mixed with rum, then topped with whipped cream.",
@@ -2159,7 +2250,7 @@ export const CATALOG_RECORDS = {
       description:
         "A Nordic drink in which small pieces of dried cheese are put in a cup and covered with hot coffee.",
       associatedLocations: [{ countryId: "sweden", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["mild cheese"],
       ingredients: ["coffee", "cheese"],
       preparation:
         "Pieces of dried cheese are put into a cup and hot coffee is poured over them.",
@@ -2173,7 +2264,7 @@ export const CATALOG_RECORDS = {
       description:
         "Coffee made by steeping coarsely ground coffee in cold or room-temperature water for many hours.",
       associatedLocations: [{ countryId: "united-states", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["lower acidity"],
       ingredients: ["ground coffee", "cold water"],
       preparation:
         "Coarse grounds are steeped in cold water for 12 hours or more, then filtered.",
@@ -2187,7 +2278,7 @@ export const CATALOG_RECORDS = {
       description:
         "An espresso drink made with steamed milk and a thin layer of microfoam.",
       associatedLocations: [{ countryId: "australia", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["strong", "velvety microfoam"],
       ingredients: ["espresso", "steamed milk"],
       preparation:
         "A shot of espresso is topped with steamed milk, with a thin layer of microfoam on top.",
@@ -2201,7 +2292,7 @@ export const CATALOG_RECORDS = {
       description:
         "A lightly roasted coffee brewed with cardamom and served in small cups without handles, in the Arabian tradition.",
       associatedLocations: [{ countryId: "saudi-arabia", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["bitter", "cardamom"],
       ingredients: ["coffee", "cardamom", "water"],
       preparation:
         "Lightly roasted coffee is boiled with water and cardamom in a dallah, and poured into small cups.",
@@ -2215,7 +2306,7 @@ export const CATALOG_RECORDS = {
       description:
         "A small, sweet espresso served in Cuba and in Cuban communities abroad.",
       associatedLocations: [{ countryId: "cuba", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["sweet", "strong", "brown sugar"],
       ingredients: ["espresso", "sugar"],
       preparation:
         "Sugar is whipped with the first drops of espresso into a thick foam, and the rest of the coffee is added.",
@@ -2229,7 +2320,7 @@ export const CATALOG_RECORDS = {
       description:
         "A Malaysian coffee from Ipoh made from beans roasted with margarine and served with condensed milk.",
       associatedLocations: [{ countryId: "malaysia", regionId: null }],
-      flavorNotes: [],
+      flavorNotes: ["caramelized", "sweet", "milky"],
       ingredients: ["coffee", "condensed milk"],
       preparation:
         "The beans are roasted with palm oil margarine, brewed, and served with sweetened condensed milk.",
@@ -2370,7 +2461,7 @@ export const CATALOG_RECORDS = {
       relationship: "suggested",
       explanation:
         "A suggested combination, not a documented tradition: a Tenom coffee is one local option to try in the style of Ipoh white coffee, which is served with condensed milk.",
-      sourceIds: ["src-wikipedia-white-coffee", "src-wikipedia-coffee"],
+      sourceIds: ["src-wikipedia-white-coffee", "src-wikipedia-tenom"],
     },
     {
       id: "pairing-barahona-arabica-cafe-con-leche",
@@ -2379,7 +2470,7 @@ export const CATALOG_RECORDS = {
       relationship: "suggested",
       explanation:
         "A suggested combination, not a documented tradition: a Barahona coffee may suit a milky drink such as café con leche.",
-      sourceIds: ["src-wikipedia-cafe-con-leche", "src-wikipedia-coffee"],
+      sourceIds: ["src-wikipedia-cafe-con-leche", "src-wikipedia-coffee-dominican-republic"],
     },
     {
       id: "pairing-ermera-arabica-flat-white",
@@ -2388,7 +2479,7 @@ export const CATALOG_RECORDS = {
       relationship: "suggested",
       explanation:
         "A suggested combination, not a documented tradition: an Ermera arabica may suit the milk-and-espresso balance of a flat white.",
-      sourceIds: ["src-wikipedia-flat-white", "src-wikipedia-coffee"],
+      sourceIds: ["src-wikipedia-flat-white", "src-sucafina-timor-leste"],
     },
     {
       id: "pairing-haitian-north-arabica-cafe-au-lait",
@@ -2407,6 +2498,118 @@ export const CATALOG_RECORDS = {
       explanation:
         "A suggested combination, not a documented tradition: a Ywangan arabica is one local alternative to the instant coffee that dalgona coffee is usually made with.",
       sourceIds: ["src-wikipedia-dalgona-coffee", "src-wikipedia-ywangan"],
+    },
+    {
+      id: "pairing-monsooned-malabar-espresso",
+      beanId: "bean-monsooned-malabar",
+      drinkId: "drink-espresso",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: Cafe Imports values the chocolate, earth and spice notes of Monsoon Malabar for anchoring traditional espresso.",
+      sourceIds: ["src-cafeimports-india", "src-wikipedia-espresso"],
+    },
+    {
+      id: "pairing-colombia-coffee-belt-washed-tinto",
+      beanId: "bean-colombia-coffee-belt-washed",
+      drinkId: "drink-tinto",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: an easy-drinking coffee from the central coffee belt suits the plain, everyday tinto.",
+      sourceIds: ["src-cafeimports-colombia", "src-vice-colombia-tinto"],
+    },
+    {
+      id: "pairing-mexico-high-grown-washed-cafe-de-olla",
+      beanId: "bean-mexico-high-grown-washed",
+      drinkId: "drink-cafe-de-olla",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: a chocolate-and-toffee Mexican coffee is a local option for café de olla.",
+      sourceIds: ["src-cafeimports-mexico", "src-wikipedia-cafe-de-olla"],
+    },
+    {
+      id: "pairing-tres-rios-washed-flat-white",
+      beanId: "bean-tres-rios-washed",
+      drinkId: "drink-flat-white",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: the toffee sweetness of a Tres Ríos coffee may carry through the milk of a flat white.",
+      sourceIds: ["src-cafeimports-costa-rica", "src-wikipedia-flat-white"],
+    },
+    {
+      id: "pairing-copan-washed-cafe-con-leche",
+      beanId: "bean-copan-washed",
+      drinkId: "drink-cafe-con-leche",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: a mild, nutty, heavy-bodied Honduran coffee may suit equal parts coffee and milk.",
+      sourceIds: ["src-cafeimports-honduras", "src-wikipedia-cafe-con-leche"],
+    },
+    {
+      id: "pairing-uganda-robusta-ca-phe-sua-da",
+      beanId: "bean-uganda-robusta",
+      drinkId: "drink-ca-phe-sua-da",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: cà phê sữa đá is made with robusta, and a Ugandan robusta is one alternative to the usual Vietnamese beans.",
+      sourceIds: ["src-wikipedia-coffee-uganda", "src-wikipedia-vietnamese-iced-coffee"],
+    },
+    {
+      id: "pairing-lam-dong-arabica-ca-phe-trung",
+      beanId: "bean-lam-dong-arabica",
+      drinkId: "drink-ca-phe-trung",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: egg coffee is traditionally made with robusta; a Lâm Đồng arabica is a local alternative.",
+      sourceIds: ["src-sucafina-vietnam", "src-wikipedia-egg-coffee"],
+    },
+    {
+      id: "pairing-sidama-natural-ethiopian-coffee-ceremony",
+      beanId: "bean-sidama-natural",
+      drinkId: "drink-ethiopian-coffee-ceremony",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: a natural-processed Ethiopian coffee is a local choice for the coffee ceremony.",
+      sourceIds: ["src-sucafina-ethiopia", "src-wikipedia-coffee-ceremony"],
+    },
+    {
+      id: "pairing-java-ijen-washed-kopi-tubruk",
+      beanId: "bean-java-ijen-washed",
+      drinkId: "drink-kopi-tubruk",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: a Javanese coffee is a local choice for Indonesia's unfiltered kopi tubruk.",
+      sourceIds: ["src-wikipedia-coffee-indonesia", "src-wikipedia-kopi-tubruk"],
+    },
+    {
+      id: "pairing-haraz-natural-qishr",
+      beanId: "bean-haraz-natural",
+      drinkId: "drink-qishr",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: qishr is a Yemeni drink made from spiced coffee husks, so a Yemeni natural is a fitting coffee to try alongside it.",
+      sourceIds: ["src-coffeereview-yemen", "src-wikipedia-qishr"],
+    },
+    {
+      id: "pairing-haraz-natural-arabic-coffee",
+      beanId: "bean-haraz-natural",
+      drinkId: "drink-arabic-coffee",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: Arabic coffee is made from arabica beans with cardamom, and a Yemeni arabica from the Haraz is one regional option.",
+      sourceIds: ["src-coffeereview-yemen", "src-wikipedia-arabic-coffee"],
+    },
+    {
+      id: "pairing-cajamarca-washed-wiener-melange",
+      beanId: "bean-cajamarca-washed",
+      drinkId: "drink-wiener-melange",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: the Melange is made with milder coffee, and Peru's coffees are known for a mild cup.",
+      sourceIds: ["src-cafeimports-peru", "src-wikipedia-wiener-melange"],
+    },
+    {
+      id: "pairing-sul-de-minas-pulped-natural-galao",
+      beanId: "bean-sul-de-minas-pulped-natural",
+      drinkId: "drink-galao",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: the nutty creaminess of a Brazilian pulped natural may suit a milky galão.",
+      sourceIds: ["src-cafeimports-brazil", "src-wikipedia-galao"],
+    },
+    {
+      id: "pairing-antigua-washed-espresso",
+      beanId: "bean-antigua-washed",
+      drinkId: "drink-espresso",
+      relationship: "suggested",
+      explanation: "A suggested combination, not a documented tradition: Cafe Imports describes Antigua coffees as sweet, smooth and lower in acidity, which can make a mellow espresso.",
+      sourceIds: ["src-cafeimports-guatemala", "src-wikipedia-espresso"],
     },
   ],
   sources: SOURCES,
