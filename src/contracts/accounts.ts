@@ -43,6 +43,11 @@ export type PaidAccess = {
 export const checkoutInputSchema = z.strictObject({ capability: z.literal(PAID_CAPABILITY) });
 export type CheckoutInput = z.infer<typeof checkoutInputSchema>;
 export interface CheckoutSession { url: string }
+/** What the one-time unlock costs, read from the configured Stripe price. Amount is in the currency's minor unit. */
+export interface CheckoutOffer {
+  capability: typeof PAID_CAPABILITY;
+  price: { unitAmount: number; currency: string } | null;
+}
 
 /** Registration and sign-in bodies for /api/auth/*. Passwords never leave the server after this. */
 export const signUpInputSchema = z.strictObject({

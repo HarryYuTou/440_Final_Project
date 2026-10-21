@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowIcon } from "@/components/icons";
-import { type CheckoutSession, PAID_CAPABILITY, type RecommendationAllowance } from "@/contracts";
+import { type CheckoutOffer, type CheckoutSession, PAID_CAPABILITY, type RecommendationAllowance } from "@/contracts";
 import { callApi, dataOf, messageOf } from "./client";
 import styles from "./accounts.module.css";
 
@@ -13,10 +13,22 @@ type State =
   | { kind: "unavailable" }
   | { kind: "ready"; allowance: RecommendationAllowance };
 
+/** Stripe amounts are in the currency's minor unit (cents for USD, whole yen for JPY). */
+export function formatPrice(unitAmount: number, currency: string): string | null {
+  try {
+    const format = new Intl.NumberFormat("en", { style: "currency", currency: currency.toUpperCase() });
+    const digits = format.resolvedOptions().maximumFractionDigits ?? 2;
+    return format.format(unitAmount / 10 ** digits);
+  } catch {
+    return null;
+  }
+}
+
 export function UpgradePanel() {
   const [state, setState] = useState<State>({ kind: "loading" });
   const [pending, setPending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [price, setPrice] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -25,6 +37,11 @@ export function UpgradePanel() {
       const allowance = dataOf(reply);
       if (allowance) setState({ kind: "ready", allowance });
       else setState(reply.status === 401 ? { kind: "sign-in" } : { kind: "unavailable" });
+    });
+    void callApi<CheckoutOffer>("/api/checkout").then((reply) => {
+      const offer = dataOf(reply)?.price;
+      if (!active || !offer) return;
+      setPrice(formatPrice(offer.unitAmount, offer.currency));
     });
     return () => { active = false; };
   }, []);
@@ -51,7 +68,10 @@ export function UpgradePanel() {
       <section className={styles.card} aria-labelledby="plan-unlimited">
         <span className={styles.badge}>One-time unlock</span>
         <h2 id="plan-unlimited">Unlimited recommendations</h2>
-        <p>A single payment unlocks unlimited AI recommendations on your account, for good. No subscription.</p>
+        <p>
+          {price ? <><strong>{price}</strong>, paid once. </> : "A single payment. "}
+          It unlocks unlimited AI recommendations on your account, for good. No subscription.
+        </p>
         <p className={styles.muted}>
           This project uses Stripe’s test mode: use the test card 4242 4242 4242 4242 with any future date and CVC. No real money moves.
         </p>

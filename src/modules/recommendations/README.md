@@ -32,7 +32,7 @@ Local try-out: put `ENABLE_DEV_FIXTURES=true` and `MODEL_API_KEY=...` in `.env.l
 ## Integration notes
 
 - **Member 3:** the real catalog and accounts are connected, and the form uses the shared `SaveAction`.
-- **Paid benefit (agreed):** a signed-in user gets 3 free recommendations, then needs the one-time unlock. `recommend` checks `quota.getRecommendationAllowance(request)` after the free no-model checks and before the model call (401 signed out, 403 quota used up), and calls `recordRecommendationUse` only for an answer with matches. The form shows Sign in / See the unlock links for those errors. Tests: `tests/unit/recommendations-quota.test.ts`.
+- **Paid benefit (agreed):** a signed-in user gets 3 free recommendations, then needs the one-time unlock. `recommend` checks `quota.getRecommendationAllowance(request)` after the free no-model checks and before the model call (401 signed out, 403 quota used up), and calls `recordRecommendationUse` only for an answer with matches. The form shows Sign in / See the unlock links for those errors, and the accounts module's `AllowanceNote` under the buttons says up front how many free ones are left. Tests: `tests/unit/recommendations-quota.test.ts`.
 
 ## Tests
 

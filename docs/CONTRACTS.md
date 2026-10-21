@@ -134,6 +134,7 @@ The catalog always works. Account, payment and AI routes return `SERVICE_UNAVAIL
 | `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/logout` | Registration, sign-in and sign-out; set or clear the session cookie |
 | `GET /api/usage` | Current user's free-recommendation allowance |
 | `GET /api/access` | Current server-side paid-access decision |
+| `GET /api/checkout` | `CheckoutOffer`: the one-time price (`{ unitAmount, currency }` in minor units, or `null`) |
 | `POST /api/checkout` | Checkout input JSON object; returns the Stripe Checkout URL |
 | `GET /api/checkout/status?sessionId=cs_test_…` | Current user's checkout state |
 | `POST /api/webhooks/stripe` | Stripe events; verifies the raw-body signature and applies each event once |

@@ -13,6 +13,7 @@ import {
 } from "@/contracts";
 import { itemKey } from "@/modules/recommendations/lib/candidates";
 import type { RecommendationLookup } from "@/modules/recommendations/lib/lookup";
+import { AllowanceNote } from "@/modules/accounts/ui/allowance-note";
 import { SaveAction } from "@/modules/accounts/ui/save-action";
 import type { InitialSearch } from "./search-context";
 import styles from "./recommendations.module.css";
@@ -110,6 +111,8 @@ export function RecommendationForm({ lookup, initial }: { lookup: Recommendation
   const [formProblem, setFormProblem] = useState<string | null>(null);
   const [loadedSaved, setLoadedSaved] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  // Bumped after each answer so the free-quota line re-reads the account.
+  const [searches, setSearches] = useState(0);
 
   const country = lookup.countries.find((entry) => entry.id === initial.countryId) ?? null;
   const region = country?.regions.find((entry) => entry.id === initial.regionId) ?? null;
@@ -195,6 +198,7 @@ export function RecommendationForm({ lookup, initial }: { lookup: Recommendation
     } catch {
       setOutcome({ kind: "error", ...errorFor(0, null) });
     }
+    setSearches((count) => count + 1);
   }
 
   async function savePreferences() {
@@ -334,10 +338,11 @@ export function RecommendationForm({ lookup, initial }: { lookup: Recommendation
         </div>
         <p className={styles.saveStatus} role="status">
           {saveState === "saved" ? "Saved to your account." : null}
-          {saveState === "sign-in" ? <>Sign in to save your preferences. <Link href="/login">Sign in</Link></> : null}
+          {saveState === "sign-in" ? <>Sign in to save your preferences. <Link href="/login?next=/recommendations">Sign in</Link></> : null}
           {saveState === "unavailable" ? "Saving preferences isn’t available yet." : null}
           {saveState === "failed" ? "We couldn’t save your preferences. Please try again." : null}
         </p>
+        <AllowanceNote refreshKey={searches} className={styles.saveStatus} />
       </form>
 
       <section className={styles.results} aria-labelledby={`${formId}-results`} aria-live="polite" aria-busy={outcome.kind === "loading"}>

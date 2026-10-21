@@ -15,14 +15,18 @@ Routes: `/login`, `/signup`, `/account`, `/saved`, `/upgrade`, `/checkout/result
 
 - Identity comes only from the session cookie. No route takes a user ID, price, entitlement or redirect URL from the browser.
 - Writes from another site's `Origin` are refused (`FORBIDDEN`) on top of `SameSite=Lax`.
+- After 10 failed sign-ins for one email within 15 minutes, sign-in for that email is refused (`FORBIDDEN`) until the window passes, even with the right password. A successful sign-in clears that email's failures and deletes expired sessions.
 - Every query is scoped to the signed-in user: a user can't read or change another user's preferences, saves, quota or checkouts.
 - Saved items store only `{itemType, itemId, savedAt}` and must exist in the catalog.
 - **Access is granted only by a verified Stripe webhook.** `/checkout/result` polls `/api/checkout/status`; the redirect itself changes nothing. A webhook counts only if its signature is valid, it is in test mode, and it is for a checkout this app created for that same user (`client_reference_id` and metadata match). Each event ID is processed once, and every write is idempotent (`ON CONFLICT DO NOTHING`, status changes only move forward), so repeated or out-of-order events can't grant twice or undo a payment. A failed write answers 500, so Stripe retries.
+- If Stripe can't be reached, checkout answers a retryable `SERVICE_UNAVAILABLE` with a clear message and records nothing. The plans page shows the real price from `STRIPE_PRICE_ID` (`GET /api/checkout`, cached for 10 minutes) and simply omits it if Stripe can't be read.
+- Not handled: refunds and disputes don't revoke access. That is acceptable for a test-mode demo; to add it, store the checkout's `payment_intent` and handle `charge.refunded`.
 - Delayed payment methods: `checkout.session.completed` with `payment_status: "unpaid"` marks the checkout `processing`, and `async_payment_succeeded` grants it. `async_payment_failed` and `expired` record the failure without granting anything.
 
 ## For the other members
 
 - **Shared save action:** `ui/save-action.tsx` (`<SaveAction itemType itemId itemName />`). It shows whether the item is already saved (one `GET /api/saved` per page) and links to sign-in when needed. It is used on bean and drink pages and on recommendation results.
+- **Quota line:** `ui/allowance-note.tsx` shows, under the recommendation form, whether the user must sign in, how many free recommendations are left, or that they are unlocked, and re-reads after each answer.
 - **Member 5 (recommendations):** `recommendationService` checks `getRecommendationAllowance(request)` before calling the model and calls `recordRecommendationUse(request)` only after an answer with matches. Signed out gives 401, quota used up gives 403, and the form shows Sign in / See the unlock links.
 - **Member 4 (trip map):** call `services.accounts.getPlanningContext(request)` on the server. It returns `{ preferences, saved }` for the signed-in user or the usual `UNAUTHENTICATED` / `SERVICE_UNAVAILABLE` errors. The trip map is free; if the team changes that, use `getAccess(request).allowed`.
 

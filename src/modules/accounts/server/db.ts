@@ -58,6 +58,11 @@ CREATE TABLE IF NOT EXISTS entitlements (
   granted_at TEXT NOT NULL,
   PRIMARY KEY (user_id, capability)
 );
+CREATE TABLE IF NOT EXISTS login_failures (
+  email TEXT NOT NULL,
+  failed_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS login_failures_by_email ON login_failures(email, failed_at);
 CREATE TABLE IF NOT EXISTS stripe_events (
   id TEXT PRIMARY KEY,
   type TEXT NOT NULL,

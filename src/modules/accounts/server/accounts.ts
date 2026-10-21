@@ -6,6 +6,7 @@ import {
   type ApiFailure,
   type ApiResult,
   type CatalogService,
+  type CheckoutOffer,
   type CheckoutStatus,
   FREE_RECOMMENDATION_LIMIT,
   PAID_CAPABILITY,
@@ -33,6 +34,9 @@ import type { PaymentGateway } from "./stripe";
 export const SESSION_COOKIE = "coffee_atlas_session";
 const SESSION_DAYS = 30;
 const MAX_SAVED_ITEMS = 500;
+/** After this many failed sign-ins for one email within the window, sign-in is refused until it passes. */
+const MAX_FAILED_SIGN_INS = 10;
+const FAILED_SIGN_IN_WINDOW_MS = 15 * 60_000;
 
 export interface AccountsDeps {
   /** Null when DATABASE_URL is not configured. */
@@ -247,12 +251,18 @@ export function createAccounts(deps: AccountsDeps) {
       if (!payments) return fail("SERVICE_UNAVAILABLE", "Checkout isn’t connected on this server.");
       if (await entitled(db, user.id)) return fail("INVALID_INPUT", "Unlimited recommendations are already unlocked on your account.");
       const base = (deps.appUrl() ?? new URL(request.url).origin).replace(/\/+$/, "");
-      const checkout = await payments.createCheckoutSession({
-        userId: user.id,
-        email: user.email,
-        successUrl: `${base}/checkout/result?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${base}/checkout/result?canceled=1`,
-      });
+      let checkout: { id: string; url: string };
+      try {
+        checkout = await payments.createCheckoutSession({
+          userId: user.id,
+          email: user.email,
+          successUrl: `${base}/checkout/result?session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${base}/checkout/result?canceled=1`,
+        });
+      } catch (error) {
+        console.error("Stripe checkout session could not be created.", error);
+        return fail("SERVICE_UNAVAILABLE", "We couldn’t reach Stripe to start checkout. Please try again in a moment.", true);
+      }
       const now = deps.now().toISOString();
       await db.execute({
         sql: `INSERT INTO checkout_sessions (id, user_id, capability, status, created_at, updated_at)
@@ -323,15 +333,33 @@ export function createAccounts(deps: AccountsDeps) {
       if (fromOtherSite(request)) return { result: crossSite, cookie: null };
       const setup = await ready();
       if (!setup) return { result: accountsUnavailable, cookie: null };
+      const email = input.email.trim().toLowerCase();
+      const now = deps.now();
+      const windowStart = new Date(now.getTime() - FAILED_SIGN_IN_WINDOW_MS).toISOString();
+      const failures = await setup.db.execute({
+        sql: "SELECT COUNT(*) AS n FROM login_failures WHERE email = ? AND failed_at > ?",
+        args: [email, windowStart],
+      });
+      if (Number(failures.rows[0]?.n ?? 0) >= MAX_FAILED_SIGN_INS) {
+        return { result: fail("FORBIDDEN", "Too many sign-in attempts for this email. Try again in 15 minutes."), cookie: null };
+      }
       const found = await setup.db.execute({
         sql: "SELECT id, email, display_name, password_hash FROM users WHERE email = ?",
-        args: [input.email.trim().toLowerCase()],
+        args: [email],
       });
       const row = found.rows[0];
       let valid = false;
       if (row) valid = await verifyPassword(input.password, String(row.password_hash));
       else await spendPasswordCheck(input.password);
-      if (!row || !valid) return { result: fail("UNAUTHENTICATED", "That email and password don’t match an account."), cookie: null };
+      if (!row || !valid) {
+        await setup.db.execute({ sql: "INSERT INTO login_failures (email, failed_at) VALUES (?, ?)", args: [email, now.toISOString()] });
+        return { result: fail("UNAUTHENTICATED", "That email and password don’t match an account."), cookie: null };
+      }
+      // Housekeeping on each successful sign-in: this email's failures, old failures, and expired sessions.
+      await setup.db.batch([
+        { sql: "DELETE FROM login_failures WHERE email = ? OR failed_at <= ?", args: [email, windowStart] },
+        { sql: "DELETE FROM sessions WHERE expires_at <= ?", args: [now.toISOString()] },
+      ], "write");
       return openSession(request, setup.db, setup.secret, toUser(row));
     },
 
@@ -426,5 +454,17 @@ export function createAccounts(deps: AccountsDeps) {
     return received("updated");
   }
 
-  return { service, auth, handleStripeWebhook };
+  /** The price shown on the plans page. A missing or failing Stripe lookup gives `price: null`, never an error page. */
+  async function checkoutOffer(): Promise<ApiResult<CheckoutOffer>> {
+    const payments = deps.payments();
+    if (!payments) return fail("SERVICE_UNAVAILABLE", "Checkout isn’t connected on this server.");
+    try {
+      return success({ capability: PAID_CAPABILITY, price: await payments.getPrice() });
+    } catch (error) {
+      console.error("Stripe price could not be read.", error);
+      return success({ capability: PAID_CAPABILITY, price: null });
+    }
+  }
+
+  return { service, auth, handleStripeWebhook, checkoutOffer };
 }

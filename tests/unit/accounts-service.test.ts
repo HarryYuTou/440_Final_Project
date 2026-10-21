@@ -23,7 +23,7 @@ let databaseCount = 0;
 const signer = new Stripe("sk_test_unit");
 let checkoutCount = 0;
 
-function setup(overrides: { payments?: boolean; database?: boolean } = {}) {
+function setup(overrides: { payments?: boolean; database?: boolean; clock?: { now: Date } } = {}) {
   vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_unit");
   vi.stubEnv("STRIPE_WEBHOOK_SECRET", WEBHOOK_SECRET);
   vi.stubEnv("STRIPE_PRICE_ID", "price_unit");
@@ -34,7 +34,8 @@ function setup(overrides: { payments?: boolean; database?: boolean } = {}) {
     const id = `cs_test_unit${checkoutCount}`;
     return { id, url: `https://checkout.stripe.com/c/pay/${id}` };
   });
-  const gateway: PaymentGateway = { createCheckoutSession, verifyEvent: real.verifyEvent };
+  const getPrice = vi.fn<PaymentGateway["getPrice"]>(async () => ({ unitAmount: 499, currency: "usd" }));
+  const gateway: PaymentGateway = { createCheckoutSession, getPrice, verifyEvent: real.verifyEvent };
   databaseCount += 1;
   const url = `file:${join(directory, `test-${databaseCount}.db`)}`;
   const accounts = createAccounts({
@@ -43,9 +44,9 @@ function setup(overrides: { payments?: boolean; database?: boolean } = {}) {
     catalog: catalogService,
     payments: () => (overrides.payments === false ? null : gateway),
     appUrl: () => "https://atlas.test",
-    now: () => new Date(),
+    now: () => overrides.clock?.now ?? new Date(),
   });
-  return { ...accounts, createCheckoutSession, url };
+  return { ...accounts, createCheckoutSession, getPrice, url };
 }
 
 function request(path: string, init: { method?: string; cookie?: string | null; origin?: string; body?: unknown } = {}): Request {
@@ -368,5 +369,54 @@ describe("Stripe test checkout and webhooks", () => {
     await accounts.handleStripeWebhook(webhookRequest(checkoutEvent("checkout.session.completed", { id: retried, userId, paymentStatus: "unpaid" })));
     expect(await status(retried)).toBe("paid");
     expect(await accounts.service.getAccess(request("/", { cookie }))).toMatchObject({ status: "granted", allowed: true });
+  });
+});
+
+describe("sign-in throttling and housekeeping", () => {
+  it("refuses sign-in after repeated failures, then allows it again once the window passes", async () => {
+    const clock = { now: new Date("2026-10-20T10:00:00Z") };
+    const accounts = setup({ clock });
+    await signUp(accounts, "quinn@example.com");
+    const attempt = (password: string) =>
+      accounts.auth.signIn(request("/", { method: "POST" }), { email: "Quinn@example.com", password });
+    for (let i = 0; i < 10; i += 1) expect((await attempt("wrong password")).result).toMatchObject({ ok: false, error: { code: "UNAUTHENTICATED" } });
+    // Even the right password is refused while the email is throttled.
+    expect((await attempt("correct horse battery")).result).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+    clock.now = new Date("2026-10-20T10:16:00Z");
+    expect((await attempt("correct horse battery")).result).toMatchObject({ ok: true, data: { status: "signed-in" } });
+    // A success clears this email's failures.
+    expect((await attempt("wrong password")).result).toMatchObject({ error: { code: "UNAUTHENTICATED" } });
+  });
+
+  it("deletes expired sessions on sign-in", async () => {
+    const clock = { now: new Date("2026-01-01T00:00:00Z") };
+    const accounts = setup({ clock });
+    await signUp(accounts, "rae@example.com");
+    clock.now = new Date("2026-03-01T00:00:00Z");
+    await accounts.auth.signIn(request("/", { method: "POST" }), { email: "rae@example.com", password: "correct horse battery" });
+    const db = createClient({ url: accounts.url });
+    expect((await db.execute("SELECT COUNT(*) AS n FROM sessions")).rows[0].n).toBe(1);
+    db.close();
+  });
+});
+
+describe("checkout offer and Stripe failures", () => {
+  it("shows the configured price, and no price when Stripe can't be read", async () => {
+    const accounts = setup();
+    expect(await accounts.checkoutOffer()).toEqual({ ok: true, data: { capability: PAID_CAPABILITY, price: { unitAmount: 499, currency: "usd" } } });
+    accounts.getPrice.mockRejectedValueOnce(new Error("stripe down"));
+    expect(await accounts.checkoutOffer()).toEqual({ ok: true, data: { capability: PAID_CAPABILITY, price: null } });
+    expect(await setup({ payments: false }).checkoutOffer()).toMatchObject({ ok: false, error: { code: "SERVICE_UNAVAILABLE" } });
+  });
+
+  it("reports a retryable error, and records nothing, when Stripe can't create the checkout", async () => {
+    const accounts = setup();
+    const cookie = await signUp(accounts, "sam@example.com");
+    accounts.createCheckoutSession.mockRejectedValueOnce(new Error("stripe down"));
+    expect(await accounts.service.createCheckout(request("/", { method: "POST", cookie }), { capability: PAID_CAPABILITY }))
+      .toMatchObject({ ok: false, error: { code: "SERVICE_UNAVAILABLE", retryable: true } });
+    const db = createClient({ url: accounts.url });
+    expect((await db.execute("SELECT COUNT(*) AS n FROM checkout_sessions")).rows[0].n).toBe(0);
+    db.close();
   });
 });

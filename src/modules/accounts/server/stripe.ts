@@ -2,7 +2,7 @@ import "server-only";
 import Stripe from "stripe";
 import { PAID_CAPABILITY } from "@/contracts";
 
-/** The two Stripe operations the app needs, so tests can run without the network. */
+/** The Stripe operations the app needs, so tests can run without the network. */
 export interface PaymentGateway {
   createCheckoutSession(input: {
     userId: string;
@@ -10,11 +10,14 @@ export interface PaymentGateway {
     successUrl: string;
     cancelUrl: string;
   }): Promise<{ id: string; url: string }>;
+  /** The configured one-time price, or null if it has no fixed amount. */
+  getPrice(): Promise<{ unitAmount: number; currency: string } | null>;
   /** Throws unless the raw body carries a valid Stripe-Signature for the webhook secret. */
   verifyEvent(rawBody: string, signature: string): Promise<Stripe.Event>;
 }
 
 let cached: { key: string; gateway: PaymentGateway } | null = null;
+const PRICE_TTL_MS = 10 * 60_000;
 
 /**
  * Null until STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and STRIPE_PRICE_ID are
@@ -34,6 +37,7 @@ export function stripeGateway(): PaymentGateway | null {
   if (cached?.key === key) return cached.gateway;
 
   const stripe = new Stripe(secretKey, { maxNetworkRetries: 1, timeout: 20_000 });
+  let priceCache: { at: number; value: Promise<{ unitAmount: number; currency: string } | null> } | null = null;
   const gateway: PaymentGateway = {
     async createCheckoutSession({ userId, email, successUrl, cancelUrl }) {
       const session = await stripe.checkout.sessions.create({
@@ -47,6 +51,16 @@ export function stripeGateway(): PaymentGateway | null {
       });
       if (!session.url) throw new Error("Stripe returned a checkout session without a URL.");
       return { id: session.id, url: session.url };
+    },
+    getPrice() {
+      if (!priceCache || Date.now() - priceCache.at > PRICE_TTL_MS) {
+        const value = stripe.prices.retrieve(price).then((found) =>
+          found.unit_amount === null ? null : { unitAmount: found.unit_amount, currency: found.currency });
+        // A failed lookup is not cached, so the next page view tries again.
+        value.catch(() => { priceCache = null; });
+        priceCache = { at: Date.now(), value };
+      }
+      return priceCache.value;
     },
     verifyEvent: (rawBody, signature) => stripe.webhooks.constructEventAsync(rawBody, signature, webhookSecret),
   };

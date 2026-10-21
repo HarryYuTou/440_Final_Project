@@ -22,3 +22,4 @@ const accounts = createAccounts({
 export const accountsService: AccountsService = accounts.service;
 export const authService = accounts.auth;
 export const handleStripeWebhook = accounts.handleStripeWebhook;
+export const checkoutOffer = accounts.checkoutOffer;
