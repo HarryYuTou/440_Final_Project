@@ -8,6 +8,12 @@ Coffee-curious consumers can describe what they enjoy—fruity, chocolatey, crea
 
 Our idea was to connect personal taste with geographic discovery. The scoped product requirements were to let users explore coffee origins, understand sourced bean and drink descriptions, save preferences and favorites, and receive AI suggestions with understandable reasons. An AI trip map extends discovery into an ordered itinerary of coffee destinations.
 
+### Target user and why AI
+
+Our target user is the everyday coffee drinker who orders a latte or buys a bag of beans each week and wants to branch out, but does not speak the language of origins, processing methods, or tasting notes. They describe coffee the way they experience it: "sweet with milk," "not too sour," "something like the chocolatey one I liked."
+
+AI is the right tool because the hard step is translation, not lookup. A filter can match a "chocolate" checkbox to a "chocolate" tag, but it cannot interpret free-text notes, weigh conflicting wishes (bright but low-acid, black but sweet), relate a home brewing method to a regional drink, or explain in plain language why an unfamiliar Ethiopian bean or Vietnamese drink suits this particular person. Ordering a set of destinations into a coherent trip around saved favorites is similarly open-ended. A language model handles this interpretation and explanation well, while our catalog supplies the facts: the model may only choose from catalog items the server has already selected, so the AI adds personalization without inventing coffees, places, or sources.
+
 The capstone scope also required account registration/login, persistent personal data, Stripe sandbox payments, and a publicly deployed application. A successful user journey therefore runs from browsing and signup through a personalized result, saving, payment, and returning to the same account. Coffee sales, café availability, travel booking, and realistic transport scheduling are outside scope.
 
 ## 2. Solution and User Journey
@@ -38,7 +44,16 @@ The live application uses Vercel, Turso, Anthropic, and Stripe sandbox. GitHub `
 
 On October 21, the team completed the public-site walkthrough and reported all steps passing: browsing, signup, saving, preference persistence, AI recommendations, trip generation, sandbox checkout, and retained data/access after re-login, including another recommendation after payment. Separately, a hosted Stripe checkout was verified to unlock access through its webhook. These results establish the working functional journey; broader quality and performance evaluation remains future work.
 
-## 5. Next Steps
+## 5. Lessons Learned
+
+- **Agree on contracts before splitting the work.** Shared Zod schemas, stable catalog IDs, and placeholder modules on `main` let five people build in parallel. Where an interface was settled late, such as trip planning reading account data, integration took extra rounds of fixes.
+- **Treat model output as untrusted input.** A model can return an unknown ID, a region in the wrong country, or a duplicate stop, so our tests cover each of these cases. Having the server choose eligible candidates and validate every answer, with one corrective retry, was more reliable than refining the prompt alone.
+- **Server-side state must be the source of truth for money and quotas.** Paid access is granted only by a verified Stripe webhook, never by the checkout redirect. Testing exposed that parallel requests could exceed the free recommendation quota, which we fixed with atomic credit claims.
+- **Merge strategy matters as much as code.** Our first catalog and trip pull requests had to be closed and redone because the branches diverged in shared files. Merging in a planned order, with merge commits that preserve history, made the final integration predictable.
+- **Keep development data clearly separate.** Sample fixtures helped the map start before the real catalog existed, but they had to be gated so they could never appear in production.
+- **Automated tests and live walkthroughs answer different questions.** Tests with controlled model responses prove error handling and access rules; only the public-site walkthrough proved that hosting, database, AI provider, and Stripe worked together.
+
+## 6. Next Steps
 
 - Evaluate recommendation relevance with users and a repeatable preference test set, including contradictory requests.
 - Improve trip ordering and overlapping map pins, while making the itinerary's discovery purpose clear.
