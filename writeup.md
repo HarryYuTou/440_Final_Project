@@ -1,6 +1,6 @@
 # Coffee Atlas: Personalized Coffee Discovery Through a World Map
 
-**Capstone write-up · October 20, 2026**
+**Capstone write-up · Updated October 21, 2026**
 
 **Implementation reviewed:** merged `main`, commit `1db47d0`
 
@@ -24,7 +24,7 @@ The merged application implements the following product requirements:
 | Personal accounts | Email/password registration, login/logout, persistent preferences, and saved beans and drinks. |
 | AI recommendations | Preference-based choices across the catalog or within a selected location, with reasons, trade-offs, and sources. |
 | AI trip map | A requested 2–6-stop itinerary with numbered map pins, route lines, explanations, detail links, and saving. |
-| Stripe test payments | Three free recommendations per account, followed by a one-time unlock for unlimited recommendations. |
+| Stripe test payments | Three free recommendations per account, followed by a one-time USD $5.00 test unlock for unlimited recommendations. |
 
 A typical journey begins on the globe. A user selects a country or region, opens a bean or regional drink, and follows “Get recommendations like this.” The recommendation form accepts acidity, sweetness, roast, milk, flavors, preparation methods, and optional natural-language notes. The user signs in, saves preferences and interesting items, and receives suggestions with reasons and caveats. From “Plan a trip,” they request destinations based on their current preferences and optionally their saved collection.
 
@@ -98,14 +98,14 @@ Automated tests use controlled model responses to exercise invalid IDs, incorrec
 
 Historical live-model evidence is separately recorded in [recommendation evidence](src/modules/recommendations/EVIDENCE.md) and the [trip module report](src/modules/trip-map/README.md), with screenshots. These October 19–20 runs used the earlier development preview catalog. They demonstrated normal recommendations/routes, contradictory preferences, and attempted instruction injection. The evidence also revealed variability: contradictory preferences sometimes produced clarification and sometimes qualified suggestions; a trip could backtrack geographically or place nearby pins on top of each other.
 
-Those observations are useful qualitative evidence, but they are not a fresh live-model evaluation of the final integrated catalog. Likewise, signed local webhook tests are not proof of an actual Stripe-hosted checkout transaction. No recommendation-quality score, conversion claim, or production performance benchmark is asserted.
+Those observations are qualitative evidence, not a fresh live-model evaluation of the final catalog. Hosted Stripe payment verification is recorded below separately from local webhook tests. No recommendation-quality score, conversion claim, or production performance benchmark is asserted.
 
 ## 6. Deployment Status, Limitations, and Next Steps
 
-Coffee Atlas is publicly accessible at **[coffee-atlas-phi.vercel.app](https://coffee-atlas-phi.vercel.app)**. A manually initiated Vercel deployment from GitHub `main` commit `5ff1d64` is live; public page, session, and health checks passed. Earlier checks covered fourteen pages, catalog counts, map data, and fixture isolation. Turso supports accounts. Vercel's confirmed `main` tracking and domain settings make successful builds from pushes/merges publish to the same URL. The Git-source deployment is verified; a new push-triggered deployment has not yet been observed.
+Coffee Atlas is publicly accessible at **[coffee-atlas-phi.vercel.app](https://coffee-atlas-phi.vercel.app)**, with Git-source `main` commit `e6fe445` rebuilt using the latest service configuration. Earlier public checks covered fourteen pages, catalog counts, map data, sessions, and fixture isolation. Turso supports accounts. Vercel tracks `main`; successful builds from pushes/merges publish to the same URL.
 
-Hosted API checks verified registration, login/logout, secure session cookies, authenticated identity, rejection of unauthenticated requests, persistent preferences/saves after re-login, and isolation between users. A browser signup also reached the account page with three free credits. An unconfigured-model error returned 503 without consuming a credit. The live health endpoint reports accounts as configured; **AI and payments remain unconfigured**. Their code and local tests are complete, but the assignment's full hosted AI/payment flow is not yet verified.
+Hosted account checks verified signup/login/logout, secure sessions, authenticated identity, persistence, and user isolation. Browser signup showed three free credits; an earlier missing-model error consumed none. Health now reports accounts, AI, and payments configured. A browser completed an actual **USD $5.00 Stripe sandbox checkout** with the official test card, without real funds. The verified webhook granted paid access; APIs and the result page confirmed unlimited recommendations, and logout/login preserved the entitlement.
 
-Next, configure Anthropic and the Stripe test price, credentials, and webhook endpoint. Then verify a live recommendation, an actual Stripe test checkout, webhook unlock, and continued recommendation/trip access on the public site.
+This verifies the successful hosted card-payment flow. Failed, delayed, and duplicate payment events were tested locally, not freshly on the public endpoint. Fresh live AI generation and recommendation/trip use after payment remain to be checked; configuration and entitlement do not establish generated-result quality or complete the full hosted AI journey.
 
 Further work should evaluate recommendation relevance with users, standardize how contradictory preferences are handled, improve trip ordering and overlapping pins, and add sourced tasting information where it is missing. Larger catalogs will need candidate prefiltering to control prompt size, cost, and latency. Broader production use would also require stronger abuse controls, account recovery, operational monitoring, and refund/dispute handling. The current version establishes the complete local product flow while keeping these remaining delivery and product limitations explicit.
