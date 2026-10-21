@@ -54,7 +54,7 @@ flowchart TD
     Trips --> AI
 ```
 
-The reviewed dependencies include Next.js 16.4.2, React 19.3.1, MapLibre GL 5.24.0, Zod, libSQL, Stripe, and the official Anthropic SDK. Provider credentials stay in server-only modules. The application is hosted on Vercel; connecting a Turso user database remains pending. Local development uses a SQLite file, with tables created on first use.
+The reviewed dependencies include Next.js 16.4.2, React 19.3.1, MapLibre GL 5.24.0, Zod, libSQL, Stripe, and the official Anthropic SDK. Provider credentials stay in server-only modules. The application is hosted on Vercel with a live Turso user database. Local development uses a SQLite file, with tables created on first use.
 
 ### Catalog and geographic presentation
 
@@ -102,10 +102,10 @@ Those observations are useful qualitative evidence, but they are not a fresh liv
 
 ## 6. Deployment Status, Limitations, and Next Steps
 
-Coffee Atlas is publicly accessible at **[coffee-atlas-phi.vercel.app](https://coffee-atlas-phi.vercel.app)**, deployed to Vercel project `harry-918a/coffee-atlas`. Unauthenticated HTTPS checks passed for fourteen pages, the catalog API, and map data. The live catalog matches the counts above, and the development fixture endpoint returns 404. This release publishes geographic browsing first; source was uploaded through the Vercel CLI without pushing Git or connecting GitHub deployment automation.
+Coffee Atlas is publicly accessible at **[coffee-atlas-phi.vercel.app](https://coffee-atlas-phi.vercel.app)**, deployed from application source `cc56fbe` through the Vercel CLI. Earlier public checks passed for fourteen pages, catalog counts, map data, and production fixture isolation. The hosted Turso database now supports accounts; GitHub deployment automation remains unconnected.
 
-The live health endpoint reports the catalog as ready but accounts, payments, and AI as not configured. Account endpoints correctly return 503. Registration/login, live AI generation, and Stripe checkout are implemented and locally tested, but **are not enabled or accepted on the public deployment**. A public URL now exists; the assignment's complete end-to-end product requirement still needs those services.
+Hosted API checks verified registration, login/logout, secure session cookies, authenticated identity, rejection of unauthenticated requests, persistent preferences/saves after re-login, and isolation between users. A browser signup also reached the account page with three free credits. An unconfigured-model error returned 503 without consuming a credit. The live health endpoint reports accounts as configured; **AI and payments remain unconfigured**. Their code and local tests are complete, but the assignment's full hosted AI/payment flow is not yet verified.
 
-Next, configure persistent database access, authentication, the model key, Stripe test price, and webhook endpoint. Then verify registration → saved preferences/items → live recommendation → actual Stripe test checkout → webhook unlock → continued recommendation and trip access on the public site.
+Next, configure Anthropic and the Stripe test price, credentials, and webhook endpoint. Then verify a live recommendation, an actual Stripe test checkout, webhook unlock, and continued recommendation/trip access on the public site.
 
 Further work should evaluate recommendation relevance with users, standardize how contradictory preferences are handled, improve trip ordering and overlapping pins, and add sourced tasting information where it is missing. Larger catalogs will need candidate prefiltering to control prompt size, cost, and latency. Broader production use would also require stronger abuse controls, account recovery, operational monitoring, and refund/dispute handling. The current version establishes the complete local product flow while keeping these remaining delivery and product limitations explicit.
