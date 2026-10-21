@@ -33,13 +33,13 @@ export interface AccountsService {
   getCheckoutState(request: Request, sessionId: string): Promise<ApiResult<CheckoutState>>;
   /** Free-quota/paid state for AI recommendations. UNAUTHENTICATED when signed out. */
   getRecommendationAllowance(request: Request): Promise<ApiResult<RecommendationAllowance>>;
-  /** Counts one free recommendation; a no-op for paid users. */
+  /** Atomically claims one free recommendation or returns FORBIDDEN; a no-op for paid users. */
   recordRecommendationUse(request: Request): Promise<ApiResult<RecommendationAllowance>>;
   /** For the AI trip map: the signed-in user's stored preferences and saved items. */
   getPlanningContext(request: Request): Promise<ApiResult<PlanningContext>>;
 }
 
 export interface RecommendationService {
-  /** If this feature becomes paid, enforce AccountsService.getAccess on the server here. */
+  /** Enforces the signed-in user's free quota or paid entitlement before delivering matches. */
   recommend(request: Request, input: RecommendationRequest): Promise<ApiResult<RecommendationResponse>>;
 }

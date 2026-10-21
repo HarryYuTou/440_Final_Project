@@ -6,6 +6,7 @@ import { type FormEvent, useState } from "react";
 import { ArrowIcon } from "@/components/icons";
 import type { SessionState } from "@/contracts";
 import { callApi, dataOf, messageOf, safeNext } from "./client";
+import { savedState } from "./saved-state";
 import styles from "./accounts.module.css";
 
 export function AuthForm({ mode, next }: { mode: "login" | "signup"; next: string | null }) {
@@ -34,6 +35,7 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next: strin
       body: mode === "login" ? { email, password } : { email, password, displayName: name || null },
     });
     if (dataOf(reply)?.status === "signed-in") {
+      savedState.reset();
       router.push(destination);
       router.refresh();
       return;

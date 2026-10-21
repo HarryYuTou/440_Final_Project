@@ -254,12 +254,30 @@ describe("free recommendation quota", () => {
     expect(await accounts.service.getRecommendationAllowance(req)).toEqual({
       ok: true, data: { paid: false, freeLimit: FREE_RECOMMENDATION_LIMIT, freeUsed: 0, freeRemaining: FREE_RECOMMENDATION_LIMIT },
     });
-    for (let used = 1; used <= FREE_RECOMMENDATION_LIMIT + 1; used += 1) await accounts.service.recordRecommendationUse(req);
+    for (let used = 1; used <= FREE_RECOMMENDATION_LIMIT; used += 1) {
+      expect(await accounts.service.recordRecommendationUse(req)).toMatchObject({ ok: true, data: { freeUsed: used } });
+    }
+    expect(await accounts.service.recordRecommendationUse(req)).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
     expect(await accounts.service.getRecommendationAllowance(req)).toMatchObject({ ok: true, data: { paid: false, freeRemaining: 0 } });
 
     const sessionId = await startCheckout(accounts, cookie);
     await accounts.handleStripeWebhook(webhookRequest(checkoutEvent("checkout.session.completed", { id: sessionId, userId: await userIdOf(accounts, cookie) })));
     expect(await accounts.service.recordRecommendationUse(req)).toMatchObject({ ok: true, data: { paid: true } });
+  });
+
+  it("allows only one concurrent answer to claim the last free use", async () => {
+    const accounts = setup();
+    const cookie = await signUp(accounts, "parallel@example.com");
+    const req = request("/", { method: "POST", cookie });
+    for (let used = 1; used < FREE_RECOMMENDATION_LIMIT; used += 1) await accounts.service.recordRecommendationUse(req);
+
+    const results = await Promise.all(Array.from({ length: 5 }, () => accounts.service.recordRecommendationUse(req)));
+    expect(results.filter((result) => result.ok)).toHaveLength(1);
+    expect(results.filter((result) => !result.ok)).toEqual(Array.from({ length: 4 }, () =>
+      expect.objectContaining({ ok: false, error: expect.objectContaining({ code: "FORBIDDEN" }) })));
+    const db = createClient({ url: accounts.url });
+    expect((await db.execute("SELECT used FROM recommendation_usage")).rows[0].used).toBe(FREE_RECOMMENDATION_LIMIT);
+    db.close();
   });
 });
 

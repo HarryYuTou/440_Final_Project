@@ -51,7 +51,7 @@ Catalog filtering accepts optional `countryId` and `regionId`; supplying a regio
 - `getAccess(request)` returns the named capability, a status, and an authoritative `allowed` boolean.
 - `createCheckout(request, input)` returns a Stripe test-mode Checkout URL for the signed-in user (`INVALID_INPUT` if already unlocked).
 - `getCheckoutState(request, sessionId)` returns `{ status: "open" | "processing" | "paid" | "failed" | "expired", access }` for the current user's own checkout, as recorded by verified webhooks.
-- `getRecommendationAllowance(request)` / `recordRecommendationUse(request)` return `{ paid, freeLimit, freeUsed, freeRemaining }`; `FREE_RECOMMENDATION_LIMIT` is 3.
+- `getRecommendationAllowance(request)` / `recordRecommendationUse(request)` return `{ paid, freeLimit, freeUsed, freeRemaining }`; `FREE_RECOMMENDATION_LIMIT` is 3. Recording atomically claims a remaining use and returns `FORBIDDEN` if another request used the last one. The caller must propagate any failure before returning matches.
 - `getPlanningContext(request)` returns `{ preferences, saved }` for the AI trip map.
 
 Registration and sign-in are separate routes, because they set the session cookie: `POST /api/auth/signup` takes `{ email, password (8–200 chars), displayName | null }`, `POST /api/auth/login` takes `{ email, password }`, and `POST /api/auth/logout` takes no body. Each returns a `SessionState`. Signed-in operations without a valid session give `UNAUTHENTICATED`; a write whose `Origin` is another site gives `FORBIDDEN`.

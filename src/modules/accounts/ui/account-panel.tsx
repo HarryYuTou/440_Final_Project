@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import type { Preferences, RecommendationAllowance, SavedItem, SessionState } from "@/contracts";
-import { callApi, dataOf } from "./client";
+import { callApi, dataOf, messageOf } from "./client";
+import { savedState } from "./saved-state";
 import styles from "./accounts.module.css";
 
 type Loaded =
@@ -36,6 +37,7 @@ export function AccountPanel() {
   const router = useRouter();
   const [state, setState] = useState<Loaded>({ kind: "loading" });
   const [signingOut, setSigningOut] = useState(false);
+  const [signOutProblem, setSignOutProblem] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -63,8 +65,16 @@ export function AccountPanel() {
   }, []);
 
   async function signOut() {
+    if (signingOut) return;
     setSigningOut(true);
-    await callApi("/api/auth/logout", { method: "POST" });
+    setSignOutProblem(null);
+    const reply = await callApi<SessionState>("/api/auth/logout", { method: "POST" });
+    if (dataOf(reply)?.status !== "signed-out") {
+      setSigningOut(false);
+      setSignOutProblem(messageOf(reply, "We couldn’t sign you out. Please try again."));
+      return;
+    }
+    savedState.reset();
     router.push("/");
     router.refresh();
   }
@@ -100,6 +110,7 @@ export function AccountPanel() {
             {signingOut ? "Signing out…" : "Sign out"}
           </button>
         </div>
+        {signOutProblem ? <p className={styles.message} data-kind="error" role="alert">{signOutProblem}</p> : null}
       </section>
 
       <section className={styles.card} aria-labelledby="account-plan">

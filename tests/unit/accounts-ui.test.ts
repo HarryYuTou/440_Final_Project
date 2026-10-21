@@ -13,6 +13,10 @@ describe("account UI helpers", () => {
     expect(safeNext("/saved")).toBe("/saved");
     expect(safeNext("//evil.example")).toBe("/account");
     expect(safeNext("/\\evil.example")).toBe("/account");
+    expect(safeNext("/\t/evil.example")).toBe("/account");
+    expect(safeNext("/\n/evil.example")).toBe("/account");
+    expect(safeNext("/\r/evil.example")).toBe("/account");
+    expect(safeNext("/saved?next=beans#favorites")).toBe("/saved?next=beans#favorites");
     expect(safeNext("https://evil.example")).toBe("/account");
     expect(safeNext(null)).toBe("/account");
   });

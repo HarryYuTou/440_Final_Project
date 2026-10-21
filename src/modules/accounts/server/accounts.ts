@@ -293,11 +293,18 @@ export function createAccounts(deps: AccountsDeps) {
 
     recordRecommendationUse: (request) => asUser(request, "get AI recommendations", async (db, user) => {
       if (!await entitled(db, user.id)) {
-        await db.execute({
+        const recorded = await db.execute({
           sql: `INSERT INTO recommendation_usage (user_id, used) VALUES (?, 1)
-                ON CONFLICT (user_id) DO UPDATE SET used = used + 1`,
-          args: [user.id],
+                ON CONFLICT (user_id) DO UPDATE SET used = used + 1
+                WHERE used < ?`,
+          args: [user.id, FREE_RECOMMENDATION_LIMIT],
         });
+        // The earlier allowance check is advisory: another request may finish
+        // while the model is running. Claim the final use atomically before
+        // delivering its answer, and never turn a failed claim into a free answer.
+        if (recorded.rowsAffected === 0 && !await entitled(db, user.id)) {
+          return fail("FORBIDDEN", `You’ve used your ${FREE_RECOMMENDATION_LIMIT} free recommendations. Unlock unlimited recommendations to keep going.`);
+        }
       }
       return success(await allowance(db, user.id));
     }),

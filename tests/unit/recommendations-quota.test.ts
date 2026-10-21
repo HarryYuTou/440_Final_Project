@@ -86,6 +86,15 @@ describe("AI recommendation quota (the paid benefit)", () => {
     expect(quota.recordRecommendationUse).not.toHaveBeenCalled();
   });
 
+  it.each(["FORBIDDEN", "UNAUTHENTICATED", "SERVICE_UNAVAILABLE"] as const)(
+    "does not deliver matches when recording the use fails with %s", async (code) => {
+      const { service, quota } = setup(allowance(false, 1));
+      const failure = { ok: false as const, error: { code, message: "Use could not be recorded.", retryable: false } };
+      quota.recordRecommendationUse.mockResolvedValue(failure);
+      expect(await service.recommend(request, input)).toEqual(failure);
+    },
+  );
+
   it("lets paid users through after the free ones are gone", async () => {
     const { service, generate } = setup(allowance(true, 0));
     expect(await service.recommend(request, input)).toMatchObject({ ok: true, data: { status: "matches" } });

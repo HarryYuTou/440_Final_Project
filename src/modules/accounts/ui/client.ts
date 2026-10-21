@@ -36,5 +36,10 @@ export const messageOf = (reply: Reply<unknown>, fallback: string): string =>
 
 /** Only same-site paths may be used as a post-sign-in destination. */
 export function safeNext(next: string | undefined | null, fallback = "/account"): string {
-  return next?.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : fallback;
+  if (!next?.startsWith("/") || next.startsWith("//") || next.includes("\\")) return fallback;
+  // URL parsing strips tabs/newlines, which could turn a path into an external URL.
+  for (const character of next) {
+    if (character.charCodeAt(0) <= 31 || character.charCodeAt(0) === 127) return fallback;
+  }
+  return next;
 }

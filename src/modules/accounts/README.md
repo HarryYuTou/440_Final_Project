@@ -27,7 +27,7 @@ Routes: `/login`, `/signup`, `/account`, `/saved`, `/upgrade`, `/checkout/result
 
 - **Shared save action:** `ui/save-action.tsx` (`<SaveAction itemType itemId itemName />`). It shows whether the item is already saved (one `GET /api/saved` per page) and links to sign-in when needed. It is used on bean and drink pages and on recommendation results.
 - **Quota line:** `ui/allowance-note.tsx` shows, under the recommendation form, whether the user must sign in, how many free recommendations are left, or that they are unlocked, and re-reads after each answer.
-- **Member 5 (recommendations):** `recommendationService` checks `getRecommendationAllowance(request)` before calling the model and calls `recordRecommendationUse(request)` only after an answer with matches. Signed out gives 401, quota used up gives 403, and the form shows Sign in / See the unlock links.
+- **Member 5 (recommendations):** `recommendationService` checks `getRecommendationAllowance(request)` before calling the model and calls `recordRecommendationUse(request)` only after an answer with matches. The final claim is atomic, so concurrent requests cannot deliver more than three free answers; a failed claim or expired session is returned before any matches. Concurrent model calls can still occur while a free use remains. Signed out gives 401, quota used up gives 403, and the form shows Sign in / See the unlock links.
 - **Member 4 (trip map):** call `services.accounts.getPlanningContext(request)` on the server. It returns `{ preferences, saved }` for the signed-in user or the usual `UNAUTHENTICATED` / `SERVICE_UNAVAILABLE` errors. The trip map is free; if the team changes that, use `getAccess(request).allowed`.
 
 ## Local setup

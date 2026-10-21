@@ -106,7 +106,10 @@ export function createRecommendationService(deps: {
         }
         const checked = validateModelOutput(answer.data, set.candidates, input.limit);
         if (checked.ok) {
-          if (deps.quota && checked.response.status === "matches") await deps.quota.recordRecommendationUse(request);
+          if (deps.quota && checked.response.status === "matches") {
+            const recorded = await deps.quota.recordRecommendationUse(request);
+            if (!recorded.ok) return recorded;
+          }
           return success(checked.response);
         }
         retryProblem = checked.problem;
