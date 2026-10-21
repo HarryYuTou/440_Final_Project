@@ -27,6 +27,10 @@ Local try-out: put `ENABLE_DEV_FIXTURES=true` and `MODEL_API_KEY=...` in `.env.l
 
 ## Page
 
+`/recommendations` shows `ui/recommendation-quiz.tsx` (client): one question per screen as two to four large cards (item type, the place when the link carries one, acidity, sweetness, roast, milk, four head-to-head flavor rounds, preparation methods, optional notes). Each winner of a flavor round joins `flavors`; the request and the recommendation logic are unchanged. Signed-out visitors first see a sign-in card (skippable; answers that hit a 401 are kept in `sessionStorage` and sent after signing in). Signed-in users with saved preferences can reuse them or retake the quiz. Finishing the quiz saves the answers with `PUT /api/preferences`.
+
+`/recommendations/classic` keeps the original one-page form below and is linked as "Edit preferences".
+
 `ui/recommendation-form.tsx` (client): item type, search area (asked explicitly when the link carries a place but no `scope`), starting item (removable), acidity / sweetness / roast / milk, flavor chips plus free-text flavors, preparation methods and free-text notes. It pre-fills from `GET /api/preferences` when accounts are connected and can save via `PUT /api/preferences` (401 → sign-in hint, 503 → "isn't available yet"). Results link to the bean/drink pages, list reasons, trade-offs and sources, and use the shared `SaveAction` from the accounts module.
 
 ## Integration notes

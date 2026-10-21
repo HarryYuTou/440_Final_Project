@@ -42,7 +42,7 @@ const EMPTY_PREFERENCES: Preferences = {
 
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
-type Outcome =
+export type Outcome =
   | { kind: "idle" }
   | { kind: "loading" }
   | { kind: "result"; data: RecommendationResponse }
@@ -50,7 +50,7 @@ type Outcome =
 
 type SaveState = "idle" | "saving" | "saved" | "sign-in" | "unavailable" | "failed";
 
-async function readEnvelope<T>(response: Response): Promise<ApiResult<T> | null> {
+export async function readEnvelope<T>(response: Response): Promise<ApiResult<T> | null> {
   try {
     const body: unknown = await response.json();
     return body && typeof body === "object" && "ok" in body ? (body as ApiResult<T>) : null;
@@ -59,7 +59,7 @@ async function readEnvelope<T>(response: Response): Promise<ApiResult<T> | null>
   }
 }
 
-function errorFor(status: number, envelope: ApiResult<unknown> | null): { message: string; retry: boolean; action?: { href: string; label: string } } {
+export function errorFor(status: number, envelope: ApiResult<unknown> | null): { message: string; retry: boolean; action?: { href: string; label: string } } {
   const server = envelope && !envelope.ok ? envelope.error : null;
   // The free quota (Member 3's paid benefit): sign in first, then unlock after the free ones.
   if (status === 401 && server) return { message: server.message, retry: false, action: { href: "/login?next=/recommendations", label: "Sign in" } };
@@ -361,7 +361,7 @@ export function RecommendationForm({ lookup, initial }: { lookup: Recommendation
   );
 }
 
-function Results({ outcome, lookup, canWiden, canBroaden, onRetry, onWiden, onBroaden }: {
+export function Results({ outcome, lookup, canWiden, canBroaden, onRetry, onWiden, onBroaden }: {
   outcome: Outcome;
   lookup: RecommendationLookup;
   canWiden: boolean;

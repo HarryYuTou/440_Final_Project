@@ -101,7 +101,7 @@ try {
 
   const pages = [
     "/", "/explore", "/explore/ethiopia", "/explore/vietnam/vietnam-central-highlands",
-    "/beans/bean-kenya-aa", "/drinks/drink-ca-phe-sua-da", "/recommendations", "/trip", "/login", "/signup",
+    "/beans/bean-kenya-aa", "/drinks/drink-ca-phe-sua-da", "/recommendations", "/recommendations/classic", "/trip", "/login", "/signup",
     "/account", "/saved", "/upgrade", "/checkout/result?paid=true&session_id=pretend",
   ];
   const catalogPages = new Set(pages.filter((path) => /^\/(explore|beans|drinks)(\/|$)/.test(path)));

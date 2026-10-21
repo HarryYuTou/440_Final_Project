@@ -5,6 +5,7 @@ import type { RecommendationCatalog } from "@/modules/recommendations/server/cat
 import { CatalogState, StateLink } from "@/modules/map-experience/ui/catalog-state";
 import { PreviewNotice } from "@/modules/map-experience/ui/preview-notice";
 import { RecommendationForm } from "./recommendation-form";
+import { RecommendationQuiz } from "./recommendation-quiz";
 import type { InitialSearch } from "./search-context";
 import styles from "./recommendations.module.css";
 
@@ -26,12 +27,13 @@ function resolveInitial(initial: InitialSearch, lookup: RecommendationLookup): {
   return { search, dropped };
 }
 
-export function RecommendationScreen({ catalog, initial }: { catalog: RecommendationCatalog; initial: InitialSearch }) {
+/** `quiz` is the default card-by-card questionnaire; `classic` keeps the original one-page form (also the place to edit every answer). */
+export function RecommendationScreen({ catalog, initial, variant = "quiz" }: { catalog: RecommendationCatalog; initial: InitialSearch; variant?: "quiz" | "classic" }) {
   return (
     <div className="content-width interior-page">
-      <Breadcrumbs items={[{ label: "Find your coffee" }]} />
+      <Breadcrumbs items={variant === "classic" ? [{ label: "Find your coffee", href: "/recommendations" }, { label: "All preferences" }] : [{ label: "Find your coffee" }]} />
       {catalog.status === "ready" ? (
-        <Ready lookup={buildLookup(catalog.snapshot)} preview={catalog.preview} initial={initial} />
+        <Ready lookup={buildLookup(catalog.snapshot)} preview={catalog.preview} initial={initial} variant={variant} />
       ) : (
         <div className={styles.stateWrap}>
           <CatalogState
@@ -49,8 +51,16 @@ export function RecommendationScreen({ catalog, initial }: { catalog: Recommenda
   );
 }
 
-function Ready({ lookup, preview, initial }: { lookup: RecommendationLookup; preview: boolean; initial: InitialSearch }) {
+function Ready({ lookup, preview, initial, variant }: { lookup: RecommendationLookup; preview: boolean; initial: InitialSearch; variant: "quiz" | "classic" }) {
   const { search, dropped } = resolveInitial(initial, lookup);
+  if (variant === "quiz") {
+    return (
+      <>
+        {preview ? <PreviewNotice /> : null}
+        <RecommendationQuiz lookup={lookup} initial={search} />
+      </>
+    );
+  }
   return (
     <>
       <header className={styles.intro}>
