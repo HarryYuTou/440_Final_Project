@@ -1,16 +1,24 @@
 import "server-only";
-import { PAID_CAPABILITY, unavailable, type AccountsService } from "@/contracts";
+import type { AccountsService } from "@/contracts";
+import { catalogService } from "@/modules/catalog/server/service";
+import { createAccounts } from "./accounts";
+import { openDatabase } from "./db";
+import { stripeGateway } from "./stripe";
 
-/** Member 3 replaces this adapter. Never infer identity or payment from browser input. */
-export const accountsService: AccountsService = {
-  async getSession() { return { status: "unavailable", user: null }; },
-  async getPreferences() { return unavailable("Preferences"); },
-  async savePreferences() { return unavailable("Preferences"); },
-  async listSaved() { return unavailable("Saved items"); },
-  async saveItem() { return unavailable("Saved items"); },
-  async removeSaved() { return unavailable("Saved items"); },
-  async getAccess() {
-    return { capability: PAID_CAPABILITY, status: "unavailable", allowed: false };
-  },
-  async createCheckout() { return unavailable("Checkout"); },
-};
+/**
+ * Accounts, preferences, saved items, recommendation quota and Stripe test
+ * payments. Without DATABASE_URL and AUTH_SECRET every operation reports the
+ * explicit unavailable state, never a pretend signed-in user.
+ */
+const accounts = createAccounts({
+  database: openDatabase,
+  secret: () => process.env.AUTH_SECRET?.trim() || null,
+  catalog: catalogService,
+  payments: stripeGateway,
+  appUrl: () => process.env.APP_URL?.trim() || null,
+  now: () => new Date(),
+});
+
+export const accountsService: AccountsService = accounts.service;
+export const authService = accounts.auth;
+export const handleStripeWebhook = accounts.handleStripeWebhook;

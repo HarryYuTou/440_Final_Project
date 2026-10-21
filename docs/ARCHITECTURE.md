@@ -13,11 +13,13 @@ flowchart TD
     Validation --> Catalog[Catalog server boundary]
     Validation --> Accounts[Account, preference, save and access boundary]
     Validation --> AI[Recommendation server boundary]
-    Catalog -. Later: Member 3 .-> Storage[Catalog storage and sourced content]
-    Accounts -. Later: Member 3 .-> Identity[Authentication and user storage]
-    Accounts -. Later: Member 3 .-> Stripe[Stripe test checkout and webhooks]
-    AI -. Later: Member 5 .-> Model[Model provider and grounded recommendation flow]
-    AI -. Later catalog access .-> Catalog
+    Catalog --> Records[Versioned, integrity-checked catalog records]
+    Accounts --> UserDB[(libSQL / SQLite: users, sessions, preferences, saves, quota, entitlements)]
+    Accounts --> Stripe[Stripe Checkout, test mode]
+    Stripe -- verified webhook --> Accounts
+    AI --> Model[Claude via the shared AI client]
+    AI --> Catalog
+    AI -- free quota / paid check --> Accounts
     Trip[Trip map server route, later: Member 4] -. Shared AI client .-> Model
     Trip -. Validates stops against .-> Catalog
     Trip -. Reads preferences and saves .-> Accounts
@@ -25,7 +27,7 @@ flowchart TD
     Fixtures --> Examples[Explicitly labeled contract examples]
 ```
 
-Solid connections describe implemented application boundaries. Dotted connections are later integrations, not working external services. The fixture gate requires `NODE_ENV=development` and `ENABLE_DEV_FIXTURES=true`; production always rejects that endpoint.
+Solid connections are implemented. Dotted connections are the AI trip map, which is not built yet. The database, Stripe and model connections are active only when their environment variables are set. The fixture gate requires `NODE_ENV=development` and `ENABLE_DEV_FIXTURES=true`; production always rejects that endpoint.
 
 ## Repository organization
 
@@ -36,7 +38,7 @@ Solid connections describe implemented application boundaries. Dotted connection
 | `src/contracts/` | Shared schemas/types for catalog, accounts, preferences, saved items, recommendations, and access |
 | `src/lib/server/` | Server-only HTTP/validation helpers |
 | `src/modules/map-experience/ui/` | Exploration and item-detail UI |
-| `src/modules/catalog/server/` | Catalog read boundary |
+| `src/modules/catalog/` | Catalog records (`data/`), integrity checks and filtering (`lib/`), and the catalog service (`server/`) |
 | `src/modules/accounts/ui/` | Account, saved-item, and payment UI |
 | `src/modules/accounts/server/` | Account, persistence, and payment/access boundary |
 | `src/modules/recommendations/ui/` | Preference input and recommendation UI |
@@ -52,6 +54,13 @@ Solid connections describe implemented application boundaries. Dotted connection
 - **Server-authoritative access:** An unconnected identity/access implementation cannot grant a paid capability. A future browser checkout redirect must never establish paid access on its own.
 - **Distinct geographic relationships:** Bean origin, drink cultural association, and bean–drink pairing remain separate concepts. A suggested pairing is not evidence of a cultural tradition.
 - **No client secrets:** Provider credentials and privileged integrations stay in server-only modules. Client components may use safe contracts and HTTP responses, never server modules.
+
+## Decisions made by Member 3 (catalog, accounts, payments)
+
+- **Catalog in Git, users in a database.** Curated content changes through reviewed pull requests and needs no import on deploy. User data lives in libSQL/SQLite (a local file, or Turso when hosted), and its schema is created on first use.
+- **Own email + password authentication.** Passwords are hashed with scrypt, sessions are random cookie tokens stored as HMACs, and there is no third-party identity provider to configure.
+- **Paid benefit:** 3 free AI recommendations, then a one-time Stripe test payment for unlimited ones. Only verified webhooks grant access, and duplicate events are idempotent.
+- **Hosting target:** Vercel + Turso ([DEPLOYMENT.md](DEPLOYMENT.md)).
 
 ## Decisions for the feature owners
 

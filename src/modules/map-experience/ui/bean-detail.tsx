@@ -11,7 +11,7 @@ import { Section } from "./item-sections";
 import { PairingList } from "./pairing-list";
 import { PreviewNotice } from "./preview-notice";
 import { RecommendLink } from "./recommend-link";
-import { SaveButton } from "./save-button";
+import { SaveAction } from "@/modules/accounts/ui/save-action";
 import { SourceList } from "./source-list";
 
 /** Bean profile: where it grows (origin), its profile, pairings and sources. */
@@ -33,7 +33,7 @@ export function BeanDetail({ bean, index, preview }: { bean: Bean; index: Catalo
           <h1>{bean.name}</h1>
           <p className={styles.lead}>{bean.description}</p>
           <div className={styles.actions}>
-            <SaveButton itemType="bean" itemId={bean.id} itemName={bean.name} />
+            <SaveAction itemType="bean" itemId={bean.id} itemName={bean.name} />
             <RecommendLink
               variant="text"
               context={{

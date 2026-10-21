@@ -13,7 +13,7 @@ import {
 } from "@/contracts";
 import { itemKey } from "@/modules/recommendations/lib/candidates";
 import type { RecommendationLookup } from "@/modules/recommendations/lib/lookup";
-import { SaveButton } from "@/modules/map-experience/ui/save-button";
+import { SaveAction } from "@/modules/accounts/ui/save-action";
 import type { InitialSearch } from "./search-context";
 import styles from "./recommendations.module.css";
 
@@ -45,7 +45,7 @@ type Outcome =
   | { kind: "idle" }
   | { kind: "loading" }
   | { kind: "result"; data: RecommendationResponse }
-  | { kind: "error"; message: string; retry: boolean };
+  | { kind: "error"; message: string; retry: boolean; action?: { href: string; label: string } };
 
 type SaveState = "idle" | "saving" | "saved" | "sign-in" | "unavailable" | "failed";
 
@@ -58,8 +58,11 @@ async function readEnvelope<T>(response: Response): Promise<ApiResult<T> | null>
   }
 }
 
-function errorFor(status: number, envelope: ApiResult<unknown> | null): { message: string; retry: boolean } {
+function errorFor(status: number, envelope: ApiResult<unknown> | null): { message: string; retry: boolean; action?: { href: string; label: string } } {
   const server = envelope && !envelope.ok ? envelope.error : null;
+  // The free quota (Member 3's paid benefit): sign in first, then unlock after the free ones.
+  if (status === 401 && server) return { message: server.message, retry: false, action: { href: "/login?next=/recommendations", label: "Sign in" } };
+  if (status === 403 && server) return { message: server.message, retry: false, action: { href: "/upgrade", label: "See the unlock" } };
   if (status === 400) return { message: server?.message ?? "Something in the search didn’t look right. Please check your choices.", retry: false };
   if (server) return { message: server.message, retry: server.retryable };
   return { message: "We couldn’t reach the recommendation service. Check your connection and try again.", retry: true };
@@ -373,6 +376,7 @@ function Results({ outcome, lookup, canWiden, canBroaden, onRetry, onWiden, onBr
       <div className={styles.message} data-kind="error">
         <p>{outcome.message}</p>
         {outcome.retry ? <button type="button" className={styles.linkButton} onClick={onRetry}>Try again</button> : null}
+        {outcome.action ? <Link className={styles.linkButton} href={outcome.action.href}>{outcome.action.label}</Link> : null}
       </div>
     );
   }
@@ -424,7 +428,7 @@ function Results({ outcome, lookup, canWiden, canBroaden, onRetry, onWiden, onBr
             </p>
             <div className={styles.matchActions}>
               {entry ? <Link className="text-link" href={entry.href}>Read more<ArrowIcon /></Link> : null}
-              <SaveButton itemType={match.item.itemType} itemId={match.item.itemId} itemName={name} />
+              <SaveAction itemType={match.item.itemType} itemId={match.item.itemId} itemName={name} />
             </div>
           </li>
         );

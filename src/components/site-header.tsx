@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BeanIcon } from "@/components/icons";
+import { AccountNav } from "@/modules/accounts/ui/account-nav";
 
 export function SiteHeader() {
   return (
@@ -14,7 +15,7 @@ export function SiteHeader() {
           <Link href="/recommendations">Find your coffee</Link>
           <Link href="/saved">Saved</Link>
         </nav>
-        <Link className="sign-in-link" href="/login">Sign in <span aria-hidden="true">↗</span></Link>
+        <AccountNav />
       </div>
     </header>
   );
