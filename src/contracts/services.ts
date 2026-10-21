@@ -1,6 +1,16 @@
 import type { ApiResult, ItemReference } from "./common";
 import type { Bean, CatalogFilter, CatalogSnapshot, Drink } from "./catalog";
-import type { CheckoutInput, CheckoutSession, PaidAccess, Preferences, SavedItem, SessionState } from "./accounts";
+import type {
+  CheckoutInput,
+  CheckoutSession,
+  CheckoutState,
+  PaidAccess,
+  PlanningContext,
+  Preferences,
+  RecommendationAllowance,
+  SavedItem,
+  SessionState,
+} from "./accounts";
 import type { RecommendationRequest, RecommendationResponse } from "./recommendations";
 
 export interface CatalogService {
@@ -19,9 +29,17 @@ export interface AccountsService {
   removeSaved(request: Request, input: ItemReference): Promise<ApiResult<{ removed: boolean }>>;
   getAccess(request: Request): Promise<PaidAccess>;
   createCheckout(request: Request, input: CheckoutInput): Promise<ApiResult<CheckoutSession>>;
+  /** The current user's own checkout, as last confirmed by a verified Stripe webhook. */
+  getCheckoutState(request: Request, sessionId: string): Promise<ApiResult<CheckoutState>>;
+  /** Free-quota/paid state for AI recommendations. UNAUTHENTICATED when signed out. */
+  getRecommendationAllowance(request: Request): Promise<ApiResult<RecommendationAllowance>>;
+  /** Atomically claims one free recommendation or returns FORBIDDEN; a no-op for paid users. */
+  recordRecommendationUse(request: Request): Promise<ApiResult<RecommendationAllowance>>;
+  /** For the AI trip map: the signed-in user's stored preferences and saved items. */
+  getPlanningContext(request: Request): Promise<ApiResult<PlanningContext>>;
 }
 
 export interface RecommendationService {
-  /** If this feature becomes paid, enforce AccountsService.getAccess on the server here. */
+  /** Enforces the signed-in user's free quota or paid entitlement before delivering matches. */
   recommend(request: Request, input: RecommendationRequest): Promise<ApiResult<RecommendationResponse>>;
 }

@@ -25,10 +25,24 @@ const preferenceInput = {
 };
 
 describe("foundation HTTP behavior", () => {
-  it("reports a running foundation without claiming product readiness", async () => {
+  it("reports which services are configured without calling any provider", async () => {
+    const network = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Unexpected network call"));
     const response = health();
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ ok: true, data: { status: "foundation", ready: false } });
+    expect(await response.json()).toMatchObject({
+      ok: true,
+      data: { status: "ok", services: { catalog: "ready", accounts: "not-configured", payments: "not-configured" } },
+    });
+    expect(network).not.toHaveBeenCalled();
+  });
+
+  it("serves the real catalog", async () => {
+    const response = await catalog(new Request("http://localhost/api/catalog"));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.ok).toBe(true);
+    expect(body.data.countries.length).toBeGreaterThan(10);
+    expect((await catalog(new Request("http://localhost/api/catalog?countryId=not-a-country"))).status).toBe(404);
   });
 
   it("returns 400 for malformed JSON and unsupported shapes", async () => {
@@ -45,15 +59,14 @@ describe("foundation HTTP behavior", () => {
     expect((await catalog(new Request("http://localhost/api/catalog?unknown=true"))).status).toBe(400);
   });
 
-  it("keeps valid but unconfigured operations unavailable", async () => {
+  it("keeps valid operations unavailable while accounts and Stripe are not configured", async () => {
     const responses = await Promise.all([
-      catalog(new Request("http://localhost/api/catalog")),
       preferences(bodyRequest(preferenceInput, "PUT")),
       save(bodyRequest({ itemType: "bean", itemId: "example-bean" })),
       remove(bodyRequest({ itemType: "drink", itemId: "example-drink" }, "DELETE")),
       recommend(bodyRequest({ preferences: preferenceInput, itemType: "both", geography: { scope: "global" } })),
       checkout(bodyRequest({ capability: PAID_CAPABILITY })),
-      webhook(),
+      webhook(new Request("http://localhost/api/webhooks/stripe", { method: "POST", headers: { "stripe-signature": "t=1,v1=fake" }, body: "{}" })),
     ]);
     for (const response of responses) {
       expect(response.status).toBe(503);

@@ -3,6 +3,9 @@ import { AccountScreen } from "@/modules/accounts/ui/account-screen";
 
 export const metadata: Metadata = { title: "Sign in" };
 
-export default function LoginPage() {
-  return <AccountScreen view="login" />;
+type Search = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function LoginPage({ searchParams }: { searchParams: Search }) {
+  const { next } = await searchParams;
+  return <AccountScreen view="login" next={typeof next === "string" ? next : null} />;
 }
