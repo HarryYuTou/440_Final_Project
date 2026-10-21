@@ -1,33 +1,33 @@
-# Foundation Architecture
+# Coffee Atlas Architecture
 
-## Current implementation boundary
+## Implemented system
 
-The foundation is one Next.js App Router application using React, TypeScript, plain CSS, and npm. Zod defines runtime data contracts; Vitest checks foundation behavior. Pages are present for every assigned feature, but external service integrations are intentionally unavailable.
+Coffee Atlas is one Next.js App Router application using React, TypeScript, plain CSS, and npm. The merged application includes geographic discovery, accounts, saved items, AI recommendations, an AI trip map, and Stripe test payments. It runs on Vercel at [coffee-atlas-phi.vercel.app](https://coffee-atlas-phi.vercel.app), with Turso for persistent user data and Anthropic for both AI features. GitHub `main` is connected to automatic production deployment.
 
 ```mermaid
 flowchart TD
-    Browser[Browser] --> Pages[Next.js pages and shared layout]
+    Browser[Browser: MapLibre globe, forms and account UI] --> Pages[Next.js pages and shared layout]
     Browser --> API[Next.js route handlers]
     Pages --> UI[Feature UI modules]
     API --> Validation[Shared Zod contracts and HTTP helpers]
-    Validation --> Catalog[Catalog server boundary]
-    Validation --> Accounts[Account, preference, save and access boundary]
-    Validation --> AI[Recommendation server boundary]
+    Validation --> Catalog[Catalog service]
+    Validation --> Accounts[Accounts and payment service]
+    Validation --> Recommendations[Recommendation service]
+    Validation --> Trips[Trip planning service]
     Catalog --> Records[Versioned, integrity-checked catalog records]
-    Accounts --> UserDB[(libSQL / SQLite: users, sessions, preferences, saves, quota, entitlements)]
-    Accounts --> Stripe[Stripe Checkout, test mode]
-    Stripe -- verified webhook --> Accounts
-    AI --> Model[Claude via the shared AI client]
-    AI --> Catalog
-    AI -- free quota / paid check --> Accounts
-    Trip[Trip map server route, later: Member 4] -. Shared AI client .-> Model
-    Trip -. Validates stops against .-> Catalog
-    Trip -. Reads preferences and saves .-> Accounts
-    API --> Fixtures[Development fixture gate]
-    Fixtures --> Examples[Explicitly labeled contract examples]
+    Accounts --> UserDB[(Turso / libSQL: users, sessions, preferences, saves, quota and entitlements)]
+    Accounts --> Stripe[Stripe Checkout: sandbox]
+    Stripe -->|Signature-verified webhook| Accounts
+    Recommendations --> Catalog
+    Recommendations -->|Free quota and paid access| Accounts
+    Trips --> Catalog
+    Trips -->|Saved context and optional paid access| Accounts
+    Recommendations --> Client[Shared server-only AI client]
+    Trips --> Client
+    Client --> Model[Anthropic Claude]
 ```
 
-Solid connections are implemented. Dotted connections are the AI trip map, which is not built yet. The database, Stripe and model connections are active only when their environment variables are set. The fixture gate requires `NODE_ENV=development` and `ENABLE_DEV_FIXTURES=true`; production always rejects that endpoint.
+All connections shown are implemented. Local development uses a SQLite file through the same libSQL interface; hosted accounts use Turso. Provider credentials stay on the server. Missing configuration produces structured errors rather than successful placeholder results. Development fixtures require both `NODE_ENV=development` and `ENABLE_DEV_FIXTURES=true`; production rejects the fixture endpoint.
 
 ## Repository organization
 
@@ -35,35 +35,25 @@ Solid connections are implemented. Dotted connections are the AI trip map, which
 |---|---|
 | `src/app/` | Page entry points, shared layout, CSS, and API routes |
 | `src/components/` | Shared interface components |
-| `src/contracts/` | Shared schemas/types for catalog, accounts, preferences, saved items, recommendations, and access |
-| `src/lib/server/` | Server-only HTTP/validation helpers |
-| `src/modules/map-experience/ui/` | Exploration and item-detail UI |
-| `src/modules/catalog/` | Catalog records (`data/`), integrity checks and filtering (`lib/`), and the catalog service (`server/`) |
-| `src/modules/accounts/ui/` | Account, saved-item, and payment UI |
-| `src/modules/accounts/server/` | Account, persistence, and payment/access boundary |
-| `src/modules/recommendations/ui/` | Preference input and recommendation UI |
-| `src/modules/recommendations/server/` | Recommendation boundary |
-| `src/dev/` | Example data, never a production catalog or identity source |
+| `src/contracts/` | Shared schemas and types for catalog, accounts, preferences, saves, recommendations, trips, and access |
+| `src/lib/server/` | HTTP/validation helpers, service registry, and shared Anthropic client |
+| `src/modules/map-experience/` | Globe exploration and item-detail UI, shared map support |
+| `src/modules/catalog/` | Versioned records, integrity checks, filtering, and catalog service |
+| `src/modules/accounts/` | Authentication, persistence, quota, checkout, entitlements, and shared save UI |
+| `src/modules/recommendations/` | Preference form, candidate selection, model prompt, output validation, and recommendation service |
+| `src/modules/trip-map/` | Trip form and globe, destination selection, model prompt, route validation, and trip service |
+| `src/dev/` | Explicit development examples, never a production catalog or identity source |
 
-## Decisions established by main
+## Design decisions
 
-- **One application:** Shared pages and API routes use the same contract definitions, avoiding an independently deployed backend at the foundation stage.
-- **Explicit module boundaries:** Each feature owner implements their assigned UI and/or server module. Shared routing, dependencies, and contract changes are coordinated by Member 3 after handoff.
-- **Validated contracts:** Inputs and outputs have a common vocabulary before any feature branch starts. Runtime schemas complement TypeScript where data crosses HTTP or provider boundaries.
-- **No credential dependency:** The baseline runs without any external setup. Unavailable adapters return structured errors rather than fake successful results.
-- **Server-authoritative access:** An unconnected identity/access implementation cannot grant a paid capability. A future browser checkout redirect must never establish paid access on its own.
-- **Distinct geographic relationships:** Bean origin, drink cultural association, and bean–drink pairing remain separate concepts. A suggested pairing is not evidence of a cultural tradition.
-- **No client secrets:** Provider credentials and privileged integrations stay in server-only modules. Client components may use safe contracts and HTTP responses, never server modules.
+- **One application with feature boundaries.** Pages and API routes delegate to modules through a central service registry. Shared Zod contracts validate data across HTTP and provider boundaries, complementing TypeScript and supporting parallel feature development.
+- **Catalog in Git, users in a database.** The catalog contains 60 countries, 54 regions, 61 beans, 27 drinks, 33 pairings, and 135 sources. Schema and integrity checks reject duplicate IDs and broken references. Personal records store catalog IDs; Turso persists accounts, preferences, saves, quota, and entitlements. The database schema is created on first use.
+- **Distinct geographic relationships.** Bean-growing origin, drink cultural association, and bean–drink pairing remain separate concepts. Suggested combinations are labeled separately from documented traditions; unknown attributes stay empty rather than being invented.
+- **Server-controlled identity and access.** Passwords use scrypt; random session tokens are stored as HMACs and sent in `HttpOnly` cookies, with `Secure` on HTTPS. Account writes reject cross-site origins, queries are scoped to the signed-in user, and repeated failed logins trigger a temporary block.
+- **A scoped payment model.** Each account receives three successful free AI recommendations, then a one-time USD $5.00 Stripe sandbox unlock for unlimited recommendations. Only verified webhooks grant access; checkout redirects do not. Event processing is idempotent. A final atomic quota claim prevents concurrent requests from delivering more than the free allowance. Trips do not spend recommendation credits and are currently outside the payment gate; `TRIP_REQUIRES_ACCESS=true` makes them use the same entitlement.
+- **Catalog-grounded AI.** Both features use the shared Anthropic client. Code selects eligible items or destinations before calling the model, then checks returned IDs, uniqueness, geography where relevant, and nonempty reasons. Recommendation sources are restricted to allowed catalog references; trip sources come directly from catalog records. Each service retries an invalid answer once before returning an error. The trip service reads saved preferences and items through the account service. These checks validate structure and references, not the truth of every generated sentence or subjective taste match.
+- **Usable geographic fallback.** MapLibre renders the globe and trip connections. Trip cards remain usable when coordinates or WebGL are unavailable. Itineraries support coffee discovery; they do not provide bookings, verified café availability, or optimized transport schedules.
 
-## Decisions made by Member 3 (catalog, accounts, payments)
+## Deployment and evidence
 
-- **Catalog in Git, users in a database.** Curated content changes through reviewed pull requests and needs no import on deploy. User data lives in libSQL/SQLite (a local file, or Turso when hosted), and its schema is created on first use.
-- **Own email + password authentication.** Passwords are hashed with scrypt, sessions are random cookie tokens stored as HMACs, and there is no third-party identity provider to configure.
-- **Paid benefit:** 3 free AI recommendations, then a one-time Stripe test payment for unlimited ones. Only verified webhooks grant access, and duplicate events are idempotent.
-- **Hosting target:** Vercel + Turso ([DEPLOYMENT.md](DEPLOYMENT.md)).
-
-## Decisions for the feature owners
-
-The final catalog coverage, data store, identity provider, model provider, hosting service, and actual paid benefit are not selected by the foundation. Member 3 coordinates these choices with the relevant feature owners. They do not block Member 1's runnable baseline.
-
-Member 3 updates this diagram and records actual providers, deployed infrastructure, and integration decisions after the feature branches merge. The final report should describe the implemented system rather than presenting this foundation diagram as a completed product.
+Vercel hosts the application, Turso persists account data, Anthropic provides AI generation, and Stripe provides sandbox Checkout and signed webhooks. Environment variables configure integrations without exposing credentials to the browser. See [deployment and acceptance evidence](DEPLOYMENT.md) for operational details, [the project write-up](../writeup.md) for the product rationale, and feature module reports for implementation evidence.

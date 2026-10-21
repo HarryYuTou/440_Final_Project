@@ -1,13 +1,13 @@
 # Deployment (Member 3)
 
-The application is hosted on **Vercel**, with accounts connected to **Turso** and Anthropic and Stripe sandbox configuration present. The hosted Stripe card-payment/unlock flow is verified; fresh hosted AI generation still requires acceptance. No secret value belongs in Git or in this file.
+The application is hosted on **Vercel**, with accounts connected to **Turso**, AI powered by Anthropic, and payments using Stripe sandbox. The hosted Stripe card-payment/unlock flow is independently verified, and the team reports the complete public-site walkthrough passed on October 21, including recommendations and trip generation. No secret value belongs in Git or in this file.
 
 ## Current deployment — October 21, 2026
 
 - **Public URL:** [coffee-atlas-phi.vercel.app](https://coffee-atlas-phi.vercel.app)
 - **Vercel project:** `harry-918a/coffee-atlas`
-- **Release:** Git-source `main` commit `e6fe445` (`updates3`), rebuilt with the latest service configuration. The deployment is Ready and is the current production release with `coffee-atlas-phi.vercel.app` assigned.
-- **GitHub integration:** connected to [HarryYuTou/440_Final_Project](https://github.com/HarryYuTou/440_Final_Project). Production branch tracking is `main`, with automatic assignment of the production domain enabled. Pushes or merges into `main` trigger a build; successful builds publish to the same public URL. This configuration and the manual Git-source deployment are verified; a deployment triggered by a new push has not yet been observed.
+- **Release checked:** Git-source `main` commit `f3536d6` (`updates3`), deployment `dpl_3ZFH9TzL3fLZ4qWCkDE5BrFKMHFM`. Vercel reported Ready with `coffee-atlas-phi.vercel.app` assigned, and its source SHA matched GitHub's latest `main` at the October 21 check.
+- **GitHub integration:** connected to [HarryYuTou/440_Final_Project](https://github.com/HarryYuTou/440_Final_Project). Production branch tracking is `main`, with automatic assignment of the production domain enabled. Pushes or merges into `main` trigger a build; successful builds publish to the same public URL. The checked release was verified as a deployment triggered by a GitHub push.
 - **Earlier Git-source release checks:** public HTTPS requests to `/`, `/explore`, `/signup`, `/api/session`, and `/api/health` returned 200.
 - **Database:** Turso `coffee-atlas`, location `aws-us-east-1`. Database connection settings, the authentication secret, and `APP_URL` are saved only in Vercel's Production environment.
 - **Earlier public verification:** unauthenticated HTTPS access to 14 pages, catalog counts of 60 countries / 54 regions / 61 beans / 27 drinks / 33 pairings / 135 sources, bundled map data, and production fixture isolation (404).
@@ -16,7 +16,7 @@ The application is hosted on **Vercel**, with accounts connected to **Turso** an
 - **Stripe configuration:** one-time USD $5.00 sandbox price. `GET /api/checkout` returns the real Stripe price (500 USD cents), and `/upgrade` displays $5.00. The webhook receives the four checkout events listed below as snapshot events using API version `2026-08-26.dahlia`.
 - **Hosted Stripe acceptance:** a browser completed the actual Stripe-hosted USD $5.00 sandbox checkout with Stripe's official `4242` test card, without real funds. The verified webhook recorded the checkout as paid; access and usage APIs reported the paid entitlement. Logout/login retained that entitlement, and the checkout result page confirmed unlimited recommendations were unlocked. The temporary application account and its records were removed afterward; Stripe's sandbox payment and webhook event records were retained.
 - **Acceptance limits:** the hosted payment check covered a successful card payment. Failure, delayed-payment, and duplicate-delivery behavior remains covered by local tests; those cases were not freshly exercised against the hosted endpoint. Local verification passed 441 tests across 24 files and the 14-page production smoke.
-- **Acceptance still required:** fresh live AI generation on the final deployment and recommendation/trip use after payment. The configured model key and paid entitlement alone do not verify generated results.
+- **Team manual acceptance (October 21):** following the public-site walkthrough, the team reported all steps passed: browsing, registration, saving, preference persistence, AI recommendation generation, AI trip generation, sandbox payment, and retained account data/access after logout/login, including another recommendation after payment. This is team-reported functional acceptance; no new automated suite or model-quality benchmark was run for this documentation update.
 
 ## 1. Database (Turso)
 

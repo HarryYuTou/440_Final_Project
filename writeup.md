@@ -1,111 +1,52 @@
-# Coffee Atlas: Personalized Coffee Discovery Through a World Map
+# Coffee Atlas: Personalized Coffee Discovery
 
-**Capstone write-up · Updated October 21, 2026**
+**Capstone write-up · October 21, 2026**
 
-**Implementation reviewed:** merged `main`, commit `1db47d0`
+**Live product:** [coffee-atlas-phi.vercel.app](https://coffee-atlas-phi.vercel.app)
 
-## 1. Problem and Product Objective
+**Deployment checked:** `main`, commit `f3536d6`
 
-**Business question:** How can coffee-curious consumers discover beans and regional drinks that suit their tastes while understanding why they might enjoy them and where those choices come from?
+## 1. Problem and Scoped PRD
 
-Our target users enjoy coffee but lack specialist knowledge of origins, processing methods, tasting terminology, and regional preparations. They can describe familiar preferences—sweet, creamy, fruity, or black—without knowing which unfamiliar coffee to choose. Lists of origins and technical descriptions often leave the practical question unanswered: “What should I try next, and why?”
+Coffee-curious consumers can describe what they enjoy—fruity, chocolatey, creamy, or black—but often lack the origin knowledge and tasting vocabulary to choose an unfamiliar bean or regional drink. Coffee information is scattered across technical descriptions and geographic lists, leaving a practical question unanswered: **“What should I try next, and why?”**
 
-Coffee Atlas connects those preferences to a curated geographic catalog. Users explore a world map, read sourced descriptions, receive personalized recommendations, and turn their interests into a coffee-discovery itinerary. AI provides the product's core decision support: recommendations answer **what to try**, while the trip planner answers **where to explore it**. Explanations, trade-offs, and source links help users judge each suggestion.
+Our idea was to connect personal taste with geographic discovery. The scoped product requirements were to let users explore coffee origins, understand sourced bean and drink descriptions, save preferences and favorites, and receive AI suggestions with understandable reasons. An AI trip map extends discovery into an ordered itinerary of coffee destinations.
 
-This is a discovery and educational product. It does not sell coffee, identify operating cafés, book travel, or calculate realistic transport schedules. Its itinerary is an ordered set of catalog destinations, not a verified travel package.
+The capstone scope also required account registration/login, persistent personal data, Stripe sandbox payments, and a publicly deployed application. A successful user journey therefore runs from browsing and signup through a personalized result, saving, payment, and returning to the same account. Coffee sales, café availability, travel booking, and realistic transport scheduling are outside scope.
 
-## 2. Delivered Scope and User Journey
+## 2. Solution and User Journey
 
-The merged application implements the following product requirements:
+Coffee Atlas combines an interactive globe with a curated catalog of **60 countries, 54 regions, 61 beans, 27 drinks, 33 pairings, and 135 sources**. Users move from a country to its regions and coffee details, follow source links, and save items they want to revisit.
 
-| Capability | Implemented behavior |
-|---|---|
-| Geographic discovery | Interactive globe, country and region views, and linked bean/drink detail pages. |
-| Personal accounts | Email/password registration, login/logout, persistent preferences, and saved beans and drinks. |
-| AI recommendations | Preference-based choices across the catalog or within a selected location, with reasons, trade-offs, and sources. |
-| AI trip map | A requested 2–6-stop itinerary with numbered map pins, route lines, explanations, detail links, and saving. |
-| Stripe test payments | Three free recommendations per account, followed by a one-time USD $5.00 test unlock for unlimited recommendations. |
+In **Find your coffee**, users describe acidity, sweetness, roast, milk, flavors, preparation methods, and optional notes. AI selects eligible catalog items and explains their fit and trade-offs. **Plan a trip** uses preferences and optionally saved items to produce a 2–6-stop route with numbered map pins, connecting lines, recommendations, and links to the same detail pages.
 
-A typical journey begins on the globe. A user selects a country or region, opens a bean or regional drink, and follows “Get recommendations like this.” The recommendation form accepts acidity, sweetness, roast, milk, flavors, preparation methods, and optional natural-language notes. The user signs in, saves preferences and interesting items, and receives suggestions with reasons and caveats. From “Plan a trip,” they request destinations based on their current preferences and optionally their saved collection.
+Each account receives three free successful recommendations. A one-time **USD $5.00 Stripe test payment** unlocks unlimited recommendations without moving real money. Trips currently remain outside the payment gate and do not consume recommendation credits; a server setting can include them in the same paid entitlement. Preferences, saved items, and paid access persist after logout and login.
 
-After three successful free recommendations, the account needs the one-time Stripe test unlock. The same entitlement can also unlock trips when the server enables `TRIP_REQUIRES_ACCESS=true`. That switch is **off by default**, so trips are currently outside the payment gate unless deployment configuration enables it. Trip requests never spend recommendation credits.
+## 3. Architecture and Key Decisions
 
-## 3. Implemented Architecture
+The product is a single **Next.js application with React and TypeScript**, deployed on Vercel. Pages and API routes delegate to modules for the map, catalog, accounts/payments, recommendations, and trips. Shared **Zod contracts** validate data crossing module, HTTP, and model boundaries. **MapLibre** renders geographic exploration and trip routes.
 
-Coffee Atlas is one Next.js App Router application with React, TypeScript, and CSS. Page entry points and HTTP route handlers delegate to feature modules. Shared Zod schemas define request/response contracts and validate data at runtime. A central service registry connects the catalog, accounts, recommendations, and trip planner.
+Curated catalog records live in Git, where edits can be reviewed and checked for broken references. Personal state lives in **Turso/libSQL** in production and SQLite locally. This separation keeps editorial content consistent across maps and AI results while allowing geographic browsing independently of the user database. Passwords use scrypt hashing; cookie-based sessions identify users, and server queries enforce ownership of preferences and saved items.
 
-```mermaid
-flowchart TD
-    Browser[Browser: map, forms, account and checkout UI] --> App[Next.js pages and API routes]
-    App --> Contracts[Shared Zod contracts]
-    Contracts --> Catalog[Catalog service]
-    Contracts --> Accounts[Account and payment service]
-    Contracts --> Recommendations[Recommendation service]
-    Contracts --> Trips[Trip service]
-    Catalog --> Records[Versioned catalog records]
-    Accounts --> DB[(SQLite / libSQL user database)]
-    Accounts --> Stripe[Stripe Checkout: test mode]
-    Stripe -->|Signed webhook| Accounts
-    Recommendations --> Catalog
-    Recommendations --> Accounts
-    Trips --> Catalog
-    Trips --> Accounts
-    Recommendations --> AI[Shared server-only Anthropic client]
-    Trips --> AI
-```
+Both AI features call **Anthropic through one server-only client**. The server constructs eligible catalog candidates before requesting an answer, then validates returned items, geographic relationships, duplicates, and reasons. Invalid answers receive one corrective retry; a second failure produces an error. Source links come from catalog records. These checks constrain outputs, while recommendation relevance and the accuracy of generated explanations still require evaluation.
 
-The reviewed dependencies include Next.js 16.4.2, React 19.3.1, MapLibre GL 5.24.0, Zod, libSQL, Stripe, and the official Anthropic SDK. Provider credentials stay in server-only modules. The application is hosted on Vercel with a live Turso user database. Local development uses a SQLite file, with tables created on first use.
+Payment access is also controlled by the server. **Stripe Checkout** collects a simulated payment, and a signed, verified webhook grants the entitlement; returning to the website alone does not unlock access. Duplicate events are handled idempotently. Recommendation credits are claimed atomically only for validated results containing matches. Provider credentials remain on the server.
 
-### Catalog and geographic presentation
+## 4. Implementation, Deployment, and Validation
 
-The actual catalog contains **60 countries, 54 regions, 61 beans, 27 drinks, 33 pairings, and 135 sources**. Records distinguish bean-growing origin from a drink's cultural association. Three pairings are labeled documented traditions; thirty are labeled suggested combinations. Unknown information stays empty rather than being inferred: sixteen beans currently have no sourced flavor notes.
+The delivery path was **idea → scoped PRD → architecture → implementation → deployment**. The discovery problem defined the user journey and boundaries; shared contracts and feature modules supported parallel implementation; integrated features were then connected to hosted accounts, AI, and payments.
 
-Catalog content lives in Git because changes are curated and reviewed. On loading, schema and integrity checks reject duplicate IDs, broken references, invalid geographic relationships, and unknown source references. User records store catalog IDs instead of copying descriptions. This keeps map and AI content consistent and lets geographic browsing work independently of the account database.
+The merged application passed the recorded local verification suite: type checking, lint, **441 tests across 24 files**, a production build, and smoke checks covering **14 pages**. Tests cover account persistence, catalog integrity, invalid model output, quota enforcement, and payment events.
 
-MapLibre renders the globe using bundled country outlines. The trip page shares the exploration map's style and loaders but owns a separate map instance, avoiding interference with exploration navigation. Numbered pins and itinerary cards highlight each other. Great-circle lines connect stops; missing coordinates and WebGL failures preserve the usable stop list instead of inventing map locations.
+The live application uses Vercel, Turso, Anthropic, and Stripe sandbox. GitHub `main` is connected to Vercel: successful builds automatically publish to the existing public URL. The latest checked release, `f3536d6`, was verified as a ready production deployment triggered by a GitHub push.
 
-### Accounts and payments
+On October 21, the team completed the public-site walkthrough and reported all steps passing: browsing, signup, saving, preference persistence, AI recommendations, trip generation, sandbox checkout, and retained data/access after re-login, including another recommendation after payment. Separately, a hosted Stripe checkout was verified to unlock access through its webhook. These results establish the working functional journey; broader quality and performance evaluation remains future work.
 
-Passwords are hashed with scrypt. Sessions use random tokens in `HttpOnly`, `SameSite=Lax` cookies, with `Secure` enabled over HTTPS; the database stores session-token HMACs. Account writes reject cross-site origins, and user queries are scoped to the authenticated session. Ten failed sign-ins within fifteen minutes temporarily block that email's login. Preferences and saved items persist across sessions.
+## 5. Next Steps
 
-Stripe Checkout uses a server-configured one-time price and accepts test mode only. A checkout redirect does not grant access. The server verifies webhook signatures, test-mode status, checkout ownership, and event identity before granting the entitlement. Duplicate events are idempotent, and delayed, failed, expired, and out-of-order payment events are handled. The return page polls for the server's payment status.
+- Evaluate recommendation relevance with users and a repeatable preference test set, including contradictory requests.
+- Improve trip ordering and overlapping map pins, while making the itinerary's discovery purpose clear.
+- Expand sourced tasting information and prefilter candidates as the catalog grows to control AI latency and cost.
+- Add account recovery, stronger abuse controls, operational monitoring, and refund/dispute support before wider commercial use.
 
-Recommendation allowance is checked before a model request. Only a validated response containing matches consumes a credit. The final database claim is atomic, preventing simultaneous requests from delivering more than three free answers. Concurrent model calls can still happen before that final claim, which remains a cost-control limitation.
-
-### AI pipeline and validation
-
-Both features use `src/lib/server/ai-client.ts`, configured through `MODEL_API_KEY` and optional `MODEL_NAME`. The code's default model identifier is `claude-sonnet-5-5`. The shared client requests structured JSON, isolates provider errors, and applies SDK timeouts and retry behavior.
-
-For recommendations, code first validates the selected location and starting item, then constructs eligible candidates. The model ranks and explains those candidates rather than supplying arbitrary catalog entries. Empty preferences and empty candidate sets return useful recovery suggestions without a model call. Validation checks candidate membership, uniqueness, nonempty reasons, and permitted source IDs before displaying matches.
-
-For trips, the server reads account context itself; the browser cannot submit another user's saved list. Explicit form preferences take precedence over saved preferences. Code builds destinations containing relevant catalog items, and the model chooses and orders stops. Validation checks country/region membership, item availability at each stop, duplicate places/items, overlapping country-and-region stops, and reasons. Source IDs and saved-item indicators are supplied from trusted application data.
-
-Both services retry an invalid answer once, then return an error. Missing configuration, provider outages, refusals, and insufficient preference information produce distinct responses. Notes are delimited as user data and the prompts direct the model to ignore instructions embedded in them. These controls validate structure and references; they do **not** prove every generated sentence or subjective preference match correct.
-
-## 4. Engineering and Product Decisions
-
-The principal design choice was to combine deterministic constraints with generative explanation. Code controls identity, entitlement, catalog eligibility, geography, and references. AI interprets everyday preferences and explains fit. This division narrows unsupported output while preserving personalization.
-
-A shared contract layer and explicit feature modules supported parallel development across map, catalog/accounts/payments, recommendations, and trips. A shared AI client and save action reduce duplicated behavior. Keeping curated content in Git and personal state in a database separates editorial review from user activity.
-
-The payment model demonstrates a meaningful product boundary: users experience the recommendation service before paying, and payment changes server-enforced access. A one-time unlock avoids subscription lifecycle complexity within the capstone scope. Configurable trip gating allows the same purchase to cover both AI features without a second product or entitlement.
-
-## 5. Evaluation and Evidence
-
-On October 20, 2026, the integrated `main` passed **`npm run verify`**: TypeScript checking, lint, **441 tests across 24 test files**, a production build, and a production smoke check covering **14 pages**. The smoke check also exercises API boundaries, production fixture isolation, fresh-database account persistence, trip context, and paid-trip gating.
-
-Automated tests use controlled model responses to exercise invalid IDs, incorrect geography, duplicate results, missing reasons, retry behavior, and provider failures. Account/payment tests use real SQLite persistence and signed Stripe event payloads without a network payment. Integration tests connect the trip planner to real account state and a deterministic model, checking that the shared entitlement controls access.
-
-Historical live-model evidence is separately recorded in [recommendation evidence](src/modules/recommendations/EVIDENCE.md) and the [trip module report](src/modules/trip-map/README.md), with screenshots. These October 19–20 runs used the earlier development preview catalog. They demonstrated normal recommendations/routes, contradictory preferences, and attempted instruction injection. The evidence also revealed variability: contradictory preferences sometimes produced clarification and sometimes qualified suggestions; a trip could backtrack geographically or place nearby pins on top of each other.
-
-Those observations are qualitative evidence, not a fresh live-model evaluation of the final catalog. Hosted Stripe payment verification is recorded below separately from local webhook tests. No recommendation-quality score, conversion claim, or production performance benchmark is asserted.
-
-## 6. Deployment Status, Limitations, and Next Steps
-
-Coffee Atlas is publicly accessible at **[coffee-atlas-phi.vercel.app](https://coffee-atlas-phi.vercel.app)**, with Git-source `main` commit `e6fe445` rebuilt using the latest service configuration. Earlier public checks covered fourteen pages, catalog counts, map data, sessions, and fixture isolation. Turso supports accounts. Vercel tracks `main`; successful builds from pushes/merges publish to the same URL.
-
-Hosted account checks verified signup/login/logout, secure sessions, authenticated identity, persistence, and user isolation. Browser signup showed three free credits; an earlier missing-model error consumed none. Health now reports accounts, AI, and payments configured. A browser completed an actual **USD $5.00 Stripe sandbox checkout** with the official test card, without real funds. The verified webhook granted paid access; APIs and the result page confirmed unlimited recommendations, and logout/login preserved the entitlement.
-
-This verifies the successful hosted card-payment flow. Failed, delayed, and duplicate payment events were tested locally, not freshly on the public endpoint. Fresh live AI generation and recommendation/trip use after payment remain to be checked; configuration and entitlement do not establish generated-result quality or complete the full hosted AI journey.
-
-Further work should evaluate recommendation relevance with users, standardize how contradictory preferences are handled, improve trip ordering and overlapping pins, and add sourced tasting information where it is missing. Larger catalogs will need candidate prefiltering to control prompt size, cost, and latency. Broader production use would also require stronger abuse controls, account recovery, operational monitoring, and refund/dispute handling. The current version establishes the complete local product flow while keeping these remaining delivery and product limitations explicit.
+Implementation details and supporting evidence are available in the [architecture](docs/ARCHITECTURE.md), [deployment record](docs/DEPLOYMENT.md), [recommendation evidence](src/modules/recommendations/EVIDENCE.md), and [trip report](src/modules/trip-map/README.md).
