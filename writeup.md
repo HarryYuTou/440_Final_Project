@@ -1,10 +1,6 @@
 # Coffee Atlas: Personalized Coffee Discovery
 
-**Capstone write-up · October 21, 2026**
-
 **Live product:** [coffee-atlas-phi.vercel.app](https://coffee-atlas-phi.vercel.app)
-
-**Deployment checked:** `main`, commit `f3536d6`
 
 ## 1. Problem and Scoped PRD
 
