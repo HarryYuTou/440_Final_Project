@@ -6,7 +6,9 @@ The application is hosted on **Vercel**, with accounts connected to **Turso**. A
 
 - **Public URL:** [coffee-atlas-phi.vercel.app](https://coffee-atlas-phi.vercel.app)
 - **Vercel project:** `harry-918a/coffee-atlas`
-- **Release:** application source `cc56fbe`, uploaded and redeployed with the Vercel CLI. GitHub deployment automation is not connected.
+- **Release:** GitHub `main` commit `5ff1d64` (`updates2`), manually deployed from Git through the Vercel dashboard. The deployment is Ready and is the current production release with `coffee-atlas-phi.vercel.app` assigned.
+- **GitHub integration:** connected to [HarryYuTou/440_Final_Project](https://github.com/HarryYuTou/440_Final_Project). Production branch tracking is `main`, with automatic assignment of the production domain enabled. Pushes or merges into `main` trigger a build; successful builds publish to the same public URL. This configuration and the manual Git-source deployment are verified; a deployment triggered by a new push has not yet been observed.
+- **Git-source release checks:** public HTTPS requests to `/`, `/explore`, `/signup`, `/api/session`, and `/api/health` returned 200. Health still reports the catalog ready and accounts configured, with payments and AI unconfigured.
 - **Database:** Turso `coffee-atlas`, location `aws-us-east-1`. Database connection settings, the authentication secret, and `APP_URL` are saved only in Vercel's Production environment.
 - **Earlier public verification:** unauthenticated HTTPS access to 14 pages, catalog counts of 60 countries / 54 regions / 61 beans / 27 drinks / 33 pairings / 135 sources, bundled map data, and production fixture isolation (404).
 - **Hosted account acceptance:** API checks passed registration, login/logout, `Secure`/`HttpOnly`/`SameSite=Lax` cookies, authenticated identity, unauthenticated 401 responses, persistent preferences/saves after re-login, and isolation between users. Browser signup reached the account page with three free credits. A model-unconfigured 503 did not consume a credit. All three temporary acceptance accounts and their test records were removed afterward.
@@ -34,7 +36,7 @@ The tables are created automatically on the first request (`src/modules/accounts
 
 ## 3. Hosting (Vercel)
 
-1. Use the existing Vercel project `harry-918a/coffee-atlas` (framework: Next.js). GitHub integration can be connected later if automatic deployment is desired.
+1. Use the existing Vercel project `harry-918a/coffee-atlas` (framework: Next.js), already connected to `HarryYuTou/440_Final_Project`. Push or merge changes into `main` to trigger a production build; successful builds update the existing public URL.
 2. Project → Settings → Environment Variables (Production):
 
 | Name | Value |

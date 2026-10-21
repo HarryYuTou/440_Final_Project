@@ -102,7 +102,7 @@ Those observations are useful qualitative evidence, but they are not a fresh liv
 
 ## 6. Deployment Status, Limitations, and Next Steps
 
-Coffee Atlas is publicly accessible at **[coffee-atlas-phi.vercel.app](https://coffee-atlas-phi.vercel.app)**, deployed from application source `cc56fbe` through the Vercel CLI. Earlier public checks passed for fourteen pages, catalog counts, map data, and production fixture isolation. The hosted Turso database now supports accounts; GitHub deployment automation remains unconnected.
+Coffee Atlas is publicly accessible at **[coffee-atlas-phi.vercel.app](https://coffee-atlas-phi.vercel.app)**. A manually initiated Vercel deployment from GitHub `main` commit `5ff1d64` is live; public page, session, and health checks passed. Earlier checks covered fourteen pages, catalog counts, map data, and fixture isolation. Turso supports accounts. Vercel's confirmed `main` tracking and domain settings make successful builds from pushes/merges publish to the same URL. The Git-source deployment is verified; a new push-triggered deployment has not yet been observed.
 
 Hosted API checks verified registration, login/logout, secure session cookies, authenticated identity, rejection of unauthenticated requests, persistent preferences/saves after re-login, and isolation between users. A browser signup also reached the account page with three free credits. An unconfigured-model error returned 503 without consuming a credit. The live health endpoint reports accounts as configured; **AI and payments remain unconfigured**. Their code and local tests are complete, but the assignment's full hosted AI/payment flow is not yet verified.
 

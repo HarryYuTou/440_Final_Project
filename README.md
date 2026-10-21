@@ -40,7 +40,7 @@ npm run test:smoke
 
 `check` runs TypeScript, lint, and automated tests (including the catalog integrity tests also available through `npm run catalog:check`). `test:smoke` starts three local production servers: one unconfigured, one with a fresh database for the account journey, and one reusing that database with paid trips enabled. It checks the built application and stops the servers afterward; it requires a successful build first. To run the whole sequence, use `npm run verify`.
 
-The included GitHub Actions workflow runs `npm ci` and `npm run verify` on pull requests and pushes to `main`. The current Vercel deployment was uploaded through the CLI; automatic deployment from GitHub is not connected.
+The included GitHub Actions workflow runs `npm ci` and `npm run verify` on pull requests and pushes to `main`. Vercel is connected to [HarryYuTou/440_Final_Project](https://github.com/HarryYuTou/440_Final_Project): pushes or merges into `main` trigger a build and, when successful, publish to the existing [production URL](https://coffee-atlas-phi.vercel.app). A manually initiated deployment from GitHub `main` commit `5ff1d64` is live and passed public page/API checks. Production branch tracking and domain assignment are confirmed; a deployment triggered by a new push has not yet been observed.
 
 For a production-style local run:
 
