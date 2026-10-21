@@ -1,7 +1,7 @@
 # Five-Person Branch and Responsibility Plan
 
 **Project:** Personalized Coffee Discovery Through a World Map  
-**Product scope:** `WRITEUP_DRAFT.md`  
+**Product scope:** `writeup.md`
 **Team:** Five people; one main foundation owner and four feature owners.
 
 ## 1. Working Model: Main Is Completed First

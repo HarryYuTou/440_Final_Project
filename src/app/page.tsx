@@ -44,9 +44,9 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
-      <aside className="preview-banner content-width" aria-label="Project status">
-        <span className="preview-label"><span aria-hidden="true" />Project preview</span>
-        <p>The atlas, coffee guides and AI recommendations are live. An AI coffee trip map is on the way.</p>
+      <aside className="preview-banner content-width" aria-label="Inside the atlas">
+        <span className="preview-label"><span aria-hidden="true" />Inside the atlas</span>
+        <p>Discover coffee-growing regions and local drink traditions, with source links to keep exploring.</p>
       </aside>
     </div>
   );
