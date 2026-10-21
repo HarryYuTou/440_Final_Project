@@ -41,18 +41,25 @@ Coffee Atlas runs as one Next.js application. Pages and API routes delegate to f
 
 ```mermaid
 flowchart TD
-    Browser[Browser: globe, discovery and account UI] --> App[Next.js pages and API routes on Vercel]
-    App --> Catalog[Catalog service]
-    App --> Accounts[Accounts and payment service]
-    App --> AI[Recommendation and trip services]
-    Catalog --> Records[Versioned catalog records in Git]
-    Accounts --> DB[(Turso / libSQL user data)]
+    Browser[Browser: MapLibre globe, forms and account UI] --> Pages[Next.js pages and shared layout]
+    Browser --> API[Next.js route handlers]
+    Pages --> UI[Feature UI modules]
+    API --> Validation[Shared Zod contracts and HTTP helpers]
+    Validation --> Catalog[Catalog service]
+    Validation --> Accounts[Accounts and payment service]
+    Validation --> Recommendations[Recommendation service]
+    Validation --> Trips[Trip planning service]
+    Catalog --> Records[Versioned, integrity-checked catalog records]
+    Accounts --> UserDB[(Turso / libSQL: users, sessions, preferences, saves, quota and entitlements)]
     Accounts --> Stripe[Stripe Checkout: sandbox]
-    Stripe -->|Verified webhook| Accounts
-    AI --> Catalog
-    AI -->|Account context and access checks| Accounts
-    AI --> Client[Shared server-only AI client]
-    Client --> Anthropic[Anthropic Claude]
+    Stripe -->|Signature-verified webhook| Accounts
+    Recommendations --> Catalog
+    Recommendations -->|Free quota and paid access| Accounts
+    Trips --> Catalog
+    Trips -->|Saved context and optional paid access| Accounts
+    Recommendations --> Client[Shared server-only AI client]
+    Trips --> Client
+    Client --> Model[Anthropic Claude]
 ```
 
 | Layer | Technology |
@@ -72,7 +79,7 @@ The main design choices are:
 - **Server-enforced access.** Sessions identify users and scope their data. Only a verified Stripe webhook grants paid access; a checkout redirect alone does not. Successful recommendation credits are claimed atomically.
 - **Shared modules and contracts.** Both AI features use the same model client, account services, and runtime schemas, reducing duplicated behavior. Secrets remain on the server.
 
-See [Architecture and design decisions](docs/ARCHITECTURE.md) for the detailed system diagram and implementation boundaries.
+See [Architecture and design decisions](docs/ARCHITECTURE.md) for the full design rationale and implementation boundaries.
 
 ### Repository layout
 
