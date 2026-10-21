@@ -11,7 +11,8 @@ import styles from "./accounts.module.css";
 
 export type AccountView =
   | { view: "login" | "signup"; next: string | null }
-  | { view: "account" | "saved" | "upgrade" }
+  | { view: "account" | "saved" }
+  | { view: "upgrade"; includesTrips?: boolean }
   | { view: "checkout-result"; sessionId: string | null; canceled: boolean };
 
 const content: Record<AccountView["view"], { breadcrumb: string; label: string; title: string; description: string }> = {
@@ -79,12 +80,14 @@ export async function AccountScreen(props: AccountView) {
       <header className={styles.intro}>
         <p className="eyebrow">{selected.label}</p>
         <h1>{selected.title}</h1>
-        <p className={styles.lede}>{selected.description}</p>
+        <p className={styles.lede}>{props.view === "upgrade" && props.includesTrips
+          ? "Every account gets 3 AI recommendations free. One payment unlocks unlimited recommendations and AI trip planning."
+          : selected.description}</p>
       </header>
       {props.view === "login" || props.view === "signup" ? <AuthForm mode={props.view} next={props.next} /> : null}
       {props.view === "account" ? <AccountPanel /> : null}
       {props.view === "saved" ? <SavedList lookup={await savedLookup()} /> : null}
-      {props.view === "upgrade" ? <UpgradePanel /> : null}
+      {props.view === "upgrade" ? <UpgradePanel includesTrips={props.includesTrips} /> : null}
       {props.view === "checkout-result" ? <CheckoutResult sessionId={props.sessionId} canceled={props.canceled} /> : null}
     </div>
   );

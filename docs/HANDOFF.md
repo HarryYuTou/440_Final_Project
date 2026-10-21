@@ -12,6 +12,7 @@ The baseline is complete locally when a fresh installation can run the checks, b
 - Member 2's map (`codex/map-experience`) is already merged into `main`. Its country/region preview data is development-only (behind `ENABLE_DEV_FIXTURES`); the real catalog is still Member 3's.
 - Members 3, 4 and 5 start their branches from the **latest** `main`, not from the original foundation commit.
 - Update (October 20): `codex/catalog-data` implements the catalog, accounts, saved items and Stripe test payments; AI recommendations are merged. The agreed paid benefit is 3 free AI recommendations per account, then a one-time unlock. The AI trip map is still open; Member 4 reads user data through `services.accounts.getPlanningContext(request)`.
+- Integration review (October 20): `codex/ai-trip-map` now includes the corrected catalog/account branch, resolves the shared-file conflicts, uses the shared account context and save action, and tests the same Stripe unlock with trips. Merge catalog/accounts first, then trips. See [merge readiness](MERGE_READINESS.md) for the exact merge method and configuration.
 
 The steps below describe the original foundation handoff. Today, create a new branch from the latest `main` (`git switch main`, `git pull --ff-only`, `git switch -c <your branch>`).
 

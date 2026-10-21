@@ -27,7 +27,7 @@ Member 4 and Member 5 share one server-side AI client and key handling. Member 5
 | `/recommendations` | Member 5 |
 | `/login`, `/signup`, `/account`, `/saved` | Member 3 |
 | `/upgrade`, `/checkout/result` | Member 3 |
-| Trip map page (new, for example `/trip`) | Member 4 |
+| `/trip` | Member 4 |
 
 ## API routes
 
@@ -37,7 +37,7 @@ Member 4 and Member 5 share one server-side AI client and key handling. Member 5
 | `/api/catalog`, `/api/catalog/beans/[id]`, `/api/catalog/drinks/[id]` | Member 3 |
 | `/api/session`, `/api/preferences`, `/api/saved`, `/api/access` | Member 3 |
 | `/api/checkout`, `/api/webhooks/stripe` | Member 3 |
-| Trip-planning route (new, for example `/api/trip`) | Member 4 |
+| `/api/trip` | Member 4 |
 | `/api/recommendations` | Member 5 |
 
 ## Shared files and integration rules

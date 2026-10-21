@@ -24,7 +24,7 @@ export function formatPrice(unitAmount: number, currency: string): string | null
   }
 }
 
-export function UpgradePanel() {
+export function UpgradePanel({ includesTrips = false }: { includesTrips?: boolean }) {
   const [state, setState] = useState<State>({ kind: "loading" });
   const [pending, setPending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -67,10 +67,10 @@ export function UpgradePanel() {
       </section>
       <section className={styles.card} aria-labelledby="plan-unlimited">
         <span className={styles.badge}>One-time unlock</span>
-        <h2 id="plan-unlimited">Unlimited recommendations</h2>
+        <h2 id="plan-unlimited">{includesTrips ? "Unlimited recommendations + trip planning" : "Unlimited recommendations"}</h2>
         <p>
           {price ? <><strong>{price}</strong>, paid once. </> : "A single payment. "}
-          It unlocks unlimited AI recommendations on your account, for good. No subscription.
+          It unlocks unlimited AI recommendations{includesTrips ? " and AI trip planning" : ""} on your account, for good. No subscription.
         </p>
         <p className={styles.muted}>
           This project uses Stripe’s test mode: use the test card 4242 4242 4242 4242 with any future date and CVC. No real money moves.
@@ -83,7 +83,7 @@ export function UpgradePanel() {
         ) : null}
         {state.kind === "unavailable" ? <p className={styles.muted}>Checkout isn’t available right now. Please try again later.</p> : null}
         {state.kind === "ready" && state.allowance.paid ? (
-          <p className={styles.message} data-kind="success">Unlimited recommendations are already unlocked on your account.</p>
+          <p className={styles.message} data-kind="success">Unlimited recommendations{includesTrips ? " and AI trip planning" : ""} are already unlocked on your account.</p>
         ) : null}
         {state.kind === "ready" && !state.allowance.paid ? (
           <>

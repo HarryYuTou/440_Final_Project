@@ -13,7 +13,7 @@ await access(new URL("../.next/BUILD_ID", import.meta.url)).catch(() => {
   throw new Error("Build the application with npm run build before running test:smoke.");
 });
 
-const secrets = ["DATABASE_URL", "DATABASE_AUTH_TOKEN", "AUTH_SECRET", "MODEL_API_KEY", "MODEL_NAME", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_ID", "APP_URL"];
+const secrets = ["DATABASE_URL", "DATABASE_AUTH_TOKEN", "AUTH_SECRET", "MODEL_API_KEY", "MODEL_NAME", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_ID", "APP_URL", "TRIP_REQUIRES_ACCESS"];
 const scratch = await mkdtemp(join(tmpdir(), "coffee-atlas-smoke-"));
 const running = new Set();
 for (const signal of ["SIGINT", "SIGTERM"]) {
@@ -101,7 +101,7 @@ try {
 
   const pages = [
     "/", "/explore", "/explore/ethiopia", "/explore/vietnam/vietnam-central-highlands",
-    "/beans/bean-kenya-aa", "/drinks/drink-ca-phe-sua-da", "/recommendations", "/login", "/signup",
+    "/beans/bean-kenya-aa", "/drinks/drink-ca-phe-sua-da", "/recommendations", "/trip", "/login", "/signup",
     "/account", "/saved", "/upgrade", "/checkout/result?paid=true&session_id=pretend",
   ];
   const catalogPages = new Set(pages.filter((path) => /^\/(explore|beans|drinks)(\/|$)/.test(path)));
@@ -111,6 +111,11 @@ try {
     const html = await response.text();
     assert.ok(html.includes("Coffee Atlas"), `Shared application shell missing at ${path}`);
     assert.ok(!html.includes("NEXT_HTTP_ERROR_FALLBACK;500"), `Server rendering error at ${path}`);
+    if (path === "/trip") {
+      assert.ok(html.includes("Your next coffee trip, drawn on the globe."), "Trip form should use the real catalog");
+      assert.ok(!html.includes("The coffee catalog isn’t connected yet."), "Trip catalog missing");
+    }
+    if (path === "/upgrade") assert.ok(!html.includes("unlimited recommendations and AI trip planning"), "Open trips must not be advertised as a paid benefit");
     if (catalogPages.has(path)) {
       assert.ok(!html.includes("The coffee catalog isn’t connected yet."), `Catalog missing at ${path}`);
       assert.ok(!html.includes("Development preview data"), `Map preview data leaked into production at ${path}`);
@@ -149,6 +154,7 @@ try {
     ["/api/saved", mutation("POST", { itemType: "bean", itemId: "bean-kenya-aa" })],
     ["/api/saved", mutation("DELETE", { itemType: "drink", itemId: "drink-ca-phe-sua-da" })],
     ["/api/recommendations", mutation("POST", { preferences, itemType: "both", geography: { scope: "global" } })],
+    ["/api/trip", mutation("POST", { preferences, stopCount: 3 })],
     ["/api/checkout", mutation("POST", { capability: "personalized-discovery" })],
     ["/api/webhooks/stripe", mutation("POST", { type: "checkout.session.completed" }, { "stripe-signature": "t=1,v1=fake" })],
     ["/api/auth/signup", mutation("POST", { email: "smoke@example.com", password: "smoke-password", displayName: null })],
@@ -162,6 +168,8 @@ try {
     ["/api/saved", mutation("POST", { itemType: "bean", itemId: "bean-kenya-aa", userId: "admin" })],
     ["/api/checkout", mutation("POST", { capability: "personalized-discovery", paid: true })],
     ["/api/recommendations", mutation("POST", {})],
+    ["/api/trip", mutation("POST", { stopCount: 9 })],
+    ["/api/trip", mutation("POST", { savedItems: [{ itemType: "bean", itemId: "example-bean" }] })],
     ["/api/auth/signup", mutation("POST", { email: "not-an-email", password: "smoke-password", displayName: null })],
     ["/api/checkout/status?sessionId=pretend", undefined],
   ]) {
@@ -207,6 +215,13 @@ try {
   assert.equal((await accounts.json("/api/usage", 200, signedIn)).data.freeRemaining, 3);
   assert.equal((await accounts.json("/api/recommendations", 401, mutation("POST", { preferences, itemType: "both", geography: { scope: "global" } }))).error.code, "UNAUTHENTICATED");
 
+  // Trip account context is available; only the absent model key prevents a plan.
+  assert.equal((await accounts.json("/api/trip", 503, withCookie("POST", { stopCount: 2 }))).error.code, "SERVICE_UNAVAILABLE");
+  assert.equal((await accounts.json("/api/usage", 200, signedIn)).data.freeRemaining, 3);
+  const emptyTaste = { acidity: "any", sweetness: "any", roast: "any", milk: "any", flavors: [], preparationMethods: [], notes: "" };
+  const emptyTrip = await accounts.json("/api/trip", 200, withCookie("POST", { preferences: emptyTaste, useSavedItems: false }));
+  assert.equal(emptyTrip.data.status, "no-trip", "Cleared form values must override saved preferences");
+
   const login = await accounts.request("/api/auth/login", mutation("POST", { email: "smoke@example.com", password: "smoke-password" }));
   assert.equal(login.status, 200);
   const logout = await accounts.request("/api/auth/logout", withCookie("POST", {}));
@@ -215,7 +230,24 @@ try {
   assert.equal((await accounts.json("/api/session", 200, signedIn)).data.status, "signed-out");
   await current.stop();
 
-  console.log(`Production smoke passed: ${pages.length} pages with the real catalog, API boundaries, fixture isolation, and the account journey on a fresh database.`);
+  // Phase 3: enable paid trips against the same database, independently of developer env settings.
+  current = await startServer({
+    DATABASE_URL: `file:${join(scratch, "smoke.db")}`,
+    AUTH_SECRET: "smoke-test-secret-0123456789abcdef",
+    TRIP_REQUIRES_ACCESS: "true",
+  });
+  const gated = current;
+  const paidLogin = await gated.request("/api/auth/login", mutation("POST", { email: "smoke@example.com", password: "smoke-password" }));
+  assert.equal(paidLogin.status, 200);
+  const paidCookie = (paidLogin.headers.get("set-cookie") ?? "").split(";")[0];
+  const gatedTrip = await gated.json("/api/trip", 403, mutation("POST", { preferences, stopCount: 2 }, { cookie: paidCookie }));
+  assert.equal(gatedTrip.error.code, "FORBIDDEN", "An unpaid account must be stopped before the model call");
+  assert.equal((await gated.json("/api/usage", 200, { headers: { cookie: paidCookie } })).data.freeRemaining, 3);
+  const plans = await (await gated.request("/upgrade")).text();
+  assert.ok(plans.includes("unlimited recommendations and AI trip planning"), "Plans must describe the shared paid entitlement when enabled");
+  await current.stop();
+
+  console.log(`Production smoke passed: ${pages.length} pages with the real catalog, API boundaries, fixture isolation, account persistence, trip context, and paid-trip gating.`);
 } catch (error) {
   if (current) console.error(current.output());
   throw error;

@@ -32,6 +32,7 @@ The tables are created automatically on the first request (`src/modules/accounts
 | `APP_URL` | `https://<your-domain>` |
 | `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` | from step 2 |
 | `MODEL_API_KEY`, `MODEL_NAME` (optional) | from Member 5 |
+| `TRIP_REQUIRES_ACCESS` | `true` to include trips in the same one-time unlock; `false` or unset keeps trips open |
 
 Leave `ENABLE_DEV_FIXTURES` unset.
 
@@ -42,5 +43,6 @@ Leave `ENABLE_DEV_FIXTURES` unset.
 1. `GET /api/health` shows `catalog: "ready"` and `accounts`, `payments` and `ai` as `"configured"`. This only checks that configuration is present.
 2. Walk the journey: sign up → explore a country → save a bean → set preferences and get a recommendation (counts down from 3) → Plans → pay with `4242 4242 4242 4242` → the checkout page turns to "unlocked" once the webhook arrives → recommendations keep working after the free ones are used.
 3. In Stripe → Webhooks, the deliveries show `200`. Use "Resend" on one: the response says `"duplicate"` and nothing is granted twice.
+4. With `TRIP_REQUIRES_ACCESS=true`, open `/trip` before paying: an unpaid account sees the plans link. After the same verified payment, it can plan routes and save recommendations; no separate Stripe product or purchase is needed. `/upgrade` lists both benefits, and trips do not use the three free recommendation credits. The repository default is `false`; set this server variable explicitly when the team enables paid trips.
 
 Any host that runs Next.js on Node.js 22+ works the same way. On a host with a persistent disk, `DATABASE_URL=file:/data/coffee-atlas.db` also works without Turso.
